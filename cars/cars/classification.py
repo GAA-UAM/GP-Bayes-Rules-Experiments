@@ -30,7 +30,7 @@ def build_dataset(d):
         X.append(value)
         y.append(np.full(shape=value.shape[0], fill_value=i))
 
-    data_matrix = np.vstack(x.data_matrix for x in X)
+    data_matrix = np.vstack([x.data_matrix for x in X])
     X = skfda.FDataGrid(data_matrix=data_matrix,
                         sample_points=X[0].sample_points)
 
@@ -77,7 +77,6 @@ def classification_test(data, n_points_segment_pow, keys, savefig=None):
     scores_real_bayes = [None] * (n_points_segment_pow + 1)
     scores_real_bayes_synt = [None] * (n_points_segment_pow + 1)
     scores_lda = [None] * (n_points_segment_pow + 1)
-    scores_linear = [None] * (n_points_segment_pow + 1)
     mean_scores_theoretical = [None] * (n_points_segment_pow + 1)
     std_scores_theoretical = [None] * (n_points_segment_pow + 1)
 
@@ -91,9 +90,6 @@ def classification_test(data, n_points_segment_pow, keys, savefig=None):
             real_bayes_rule=True, synthetic_covariance=True)
         clf_lda = sklearn.discriminant_analysis.LinearDiscriminantAnalysis(
             priors=[.5, .5])
-        clf_linear = LongitudinalVarianceClassifier(real_bayes_rule=True,
-                                                    synthetic_covariance=False,
-                                                    linear=True)
 
         scores[resolution] = cross_val_score(clf, X, y, cv=cv)
         scores_real_bayes[resolution] = cross_val_score(
@@ -102,7 +98,6 @@ def classification_test(data, n_points_segment_pow, keys, savefig=None):
             clf_real_bayes_synt, X, y, cv=cv)
         scores_lda[resolution] = cross_val_score(
             clf_lda, X.data_matrix[..., 0][:, 1:], y, cv=cv)
-        scores_linear[resolution] = cross_val_score(clf_linear, X, y, cv=cv)
 
         mean_0 = 0
         mean_1 = 0
@@ -122,7 +117,6 @@ def classification_test(data, n_points_segment_pow, keys, savefig=None):
     scores_real_bayes = np.array(scores_real_bayes)
     scores_real_bayes_synt = np.array(scores_real_bayes_synt)
     scores_lda = np.array(scores_lda)
-    scores_linear = np.array(scores_linear)
 
     mean_scores = np.mean(scores, axis=1)
     mean_scores_real_bayes = np.mean(scores_real_bayes, axis=1)
@@ -165,7 +159,7 @@ def classification_test(data, n_points_segment_pow, keys, savefig=None):
     leg.get_frame().set_alpha(1)
 
     plt.xlim(0, n_points_segment_pow)
-    plt.ylim(ymax=1.05)
+    plt.ylim(top=1.05)
     plt.axhline(1, linestyle=':', color='black')
     if savefig:
         plt.savefig(savefig, bbox_inches="tight", pad_inches=0)
