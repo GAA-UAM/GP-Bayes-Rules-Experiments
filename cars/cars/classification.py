@@ -1,7 +1,13 @@
 import sklearn
-import sklearn.discriminant_analysis
-from sklearn.model_selection import cross_val_score
+from sklearn.cross_decomposition import PLSRegression
+from sklearn.decomposition import PCA
+from sklearn.discriminant_analysis import (
+    LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis)
+from sklearn.model_selection import cross_val_score, GridSearchCV
+from sklearn.neighbors import NearestCentroid
+from sklearn.pipeline import Pipeline
 
+from fda_methods.rk import RK
 import matplotlib.pyplot as plt
 import numpy as np
 import skfda
@@ -10,15 +16,11 @@ from .longvar import LongitudinalVarianceClassifier
 from .theoretical import TheoreticalBounds
 
 
-def compute_class_variances(data):
-    class_variances = []
+class PLS(PLSRegression):
 
-    for _, value in data.items():
-        var = skfda.exploratory.stats.var(
-            value[:, 1:]) / np.arange(1, value.data_matrix.shape[1])
-        class_variances.append(var.data_matrix[..., 0][0, -1])
-
-    return class_variances
+    def transform(self, X, Y=None, copy=True):
+        return PLSRegression.transform(
+            self, X, Y=None, copy=copy)
 
 
 def build_dataset(d):
@@ -62,13 +64,8 @@ def plot_with_var(mean, std, color, label, std_span=0, **kwargs):
     plt.plot(mean, label=label, color=color, **kwargs)
 
 
-def filter_data(data, keys):
-    return {k: data[k] for k in keys}
-
-
-def classification_test(data, n_points_segment_pow, keys, savefig=None):
-
-    data = filter_data(data, keys)
+def classification_test(data, n_points_segment_pow,
+                        class_variances, savefig=None):
 
     # Leave one-out
     cv = 10
@@ -77,6 +74,10 @@ def classification_test(data, n_points_segment_pow, keys, savefig=None):
     scores_real_bayes = [None] * (n_points_segment_pow + 1)
     scores_real_bayes_synt = [None] * (n_points_segment_pow + 1)
     scores_lda = [None] * (n_points_segment_pow + 1)
+    scores_pca_centroid = [None] * (n_points_segment_pow + 1)
+    scores_pls_centroid = [None] * (n_points_segment_pow + 1)
+    scores_galeano = [None] * (n_points_segment_pow + 1)
+    scores_rkc = [None] * (n_points_segment_pow + 1)
     mean_scores_theoretical = [None] * (n_points_segment_pow + 1)
     std_scores_theoretical = [None] * (n_points_segment_pow + 1)
 
@@ -88,8 +89,31 @@ def classification_test(data, n_points_segment_pow, keys, savefig=None):
         clf_real_bayes = LongitudinalVarianceClassifier(real_bayes_rule=True)
         clf_real_bayes_synt = LongitudinalVarianceClassifier(
             real_bayes_rule=True, synthetic_covariance=True)
-        clf_lda = sklearn.discriminant_analysis.LinearDiscriminantAnalysis(
-            priors=[.5, .5])
+        clf_lda = LinearDiscriminantAnalysis(priors=[.5, .5])
+        clf_pca_centroid = GridSearchCV(Pipeline([
+            ("pca", PCA(random_state=0)),
+            ("centroid", NearestCentroid())]),
+            param_grid={
+            "pca__n_components": range(1, min(21, len(X.sample_points[0])))
+        }, cv=cv)
+        clf_pls_centroid = GridSearchCV(Pipeline([
+            ("pls", PLS()),
+            ("centroid", NearestCentroid())]),
+            param_grid={
+            "pls__n_components": range(1, min(21, len(X.sample_points[0])))
+        }, cv=cv)
+        clf_galeano = GridSearchCV(Pipeline([
+            ("pca", PCA(random_state=0)),
+            ("qda", QuadraticDiscriminantAnalysis())]),
+            param_grid={
+            "pca__n_components": range(1, min(21, len(X.sample_points[0])))
+        }, cv=cv)
+        clf_rkc = GridSearchCV(Pipeline([
+            ("rk", RK()),
+            ("lda", LinearDiscriminantAnalysis())]),
+            param_grid={
+            "rk__n_components": range(1, min(21, len(X.sample_points[0])))
+        }, cv=cv)
 
         scores[resolution] = cross_val_score(clf, X, y, cv=cv)
         scores_real_bayes[resolution] = cross_val_score(
@@ -98,11 +122,17 @@ def classification_test(data, n_points_segment_pow, keys, savefig=None):
             clf_real_bayes_synt, X, y, cv=cv)
         scores_lda[resolution] = cross_val_score(
             clf_lda, X.data_matrix[..., 0][:, 1:], y, cv=cv)
+        scores_pca_centroid[resolution] = cross_val_score(
+            clf_pca_centroid, X.data_matrix[..., 0][:, 1:], y, cv=cv)
+        scores_pls_centroid[resolution] = cross_val_score(
+            clf_pls_centroid, X.data_matrix[..., 0][:, 1:], y, cv=cv)
+        scores_galeano[resolution] = cross_val_score(
+            clf_galeano, X.data_matrix[..., 0][:, 1:], y, cv=cv)
+        scores_rkc[resolution] = cross_val_score(
+            clf_rkc, X.data_matrix[..., 0][:, 1:], y, cv=cv)
 
         mean_0 = 0
         mean_1 = 0
-
-        class_variances = compute_class_variances(data)
 
         theoretical_bounds = TheoreticalBounds(variance_0=class_variances[0],
                                                variance_1=class_variances[1],
@@ -117,23 +147,39 @@ def classification_test(data, n_points_segment_pow, keys, savefig=None):
     scores_real_bayes = np.array(scores_real_bayes)
     scores_real_bayes_synt = np.array(scores_real_bayes_synt)
     scores_lda = np.array(scores_lda)
+    scores_pca_centroid = np.array(scores_pca_centroid)
+    scores_pls_centroid = np.array(scores_pls_centroid)
+    scores_galeano = np.array(scores_galeano)
+    scores_rkc = np.array(scores_rkc)
 
     mean_scores = np.mean(scores, axis=1)
     mean_scores_real_bayes = np.mean(scores_real_bayes, axis=1)
     mean_scores_real_bayes_synt = np.mean(scores_real_bayes_synt, axis=1)
     mean_scores_lda = np.mean(scores_lda, axis=1)
+    mean_scores_pca_centroid = np.mean(scores_pca_centroid, axis=1)
+    mean_scores_pls_centroid = np.mean(scores_pls_centroid, axis=1)
+    mean_scores_galeano = np.mean(scores_galeano, axis=1)
+    mean_scores_rkc = np.mean(scores_rkc, axis=1)
     mean_scores_theoretical = np.array(mean_scores_theoretical)
 
     std_scores = np.std(scores, axis=1)
     std_scores_real_bayes = np.std(scores_real_bayes, axis=1)
     std_scores_real_bayes_synt = np.std(scores_real_bayes_synt, axis=1)
     std_scores_lda = np.std(scores_lda, axis=1)
+    std_scores_pca_centroid = np.std(scores_pca_centroid, axis=1)
+    std_scores_pls_centroid = np.std(scores_pls_centroid, axis=1)
+    std_scores_galeano = np.std(scores_galeano, axis=1)
+    std_scores_rkc = np.std(scores_rkc, axis=1)
     std_scores_theoretical = np.array(std_scores_theoretical)
 
     legend_scores = 'NP-Rule'
     legend_scores_real_bayes = 'e-QDA'
     legend_scores_real_bayes_synt = 'QDA'
     legend_scores_lda = 'LDA'
+    legend_scores_pca_centroid = 'PCA-Centroid'
+    legend_scores_pls_centroid = 'PLS-Centroid'
+    legend_scores_galeano = 'Galeano'
+    legend_scores_rkc = 'RKC'
     legend_theoretical = 'Theoretical'
 
     # plt.title('Accuracy')
@@ -151,6 +197,14 @@ def classification_test(data, n_points_segment_pow, keys, savefig=None):
                   color='C2', linestyle='-.', marker='v')
     plot_with_var(mean=mean_scores_lda, std=std_scores_lda,
                   label=legend_scores_lda, color='C3', marker='s')
+    plot_with_var(mean=mean_scores_pca_centroid, std=std_scores_pca_centroid,
+                  label=legend_scores_pca_centroid, color='C4', marker='P')
+    plot_with_var(mean=mean_scores_pls_centroid, std=std_scores_pls_centroid,
+                  label=legend_scores_pls_centroid, color='C5', marker='X')
+    plot_with_var(mean=mean_scores_galeano, std=std_scores_galeano,
+                  label=legend_scores_galeano, color='C6', marker='p')
+    plot_with_var(mean=mean_scores_rkc, std=std_scores_rkc,
+                  label=legend_scores_rkc, color='C7', marker='*')
     plt.xticks(*list(zip(*[(i, 2**i)
                            for i in range(n_points_segment_pow + 1)])))
     plt.xlabel("$N_b$")
