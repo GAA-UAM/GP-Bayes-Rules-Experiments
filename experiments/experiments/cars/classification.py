@@ -1,26 +1,16 @@
-import sklearn
-from sklearn.cross_decomposition import PLSRegression
-from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import (
-    LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis)
-from sklearn.model_selection import cross_val_score, GridSearchCV
-from sklearn.neighbors import NearestCentroid
-from sklearn.pipeline import Pipeline
+    LinearDiscriminantAnalysis)
+from sklearn.model_selection import cross_val_score
 
-from fda_methods.rk import RK
 import matplotlib.pyplot as plt
 import numpy as np
 import skfda
 
+from ..common.classification import (dict_with_resolution, classifier_galeano,
+                                     classifier_rkc, classifier_pca_centroid,
+                                     classifier_pls_centroid, plot_with_var)
 from .longvar import LongitudinalVarianceClassifier
 from .theoretical import TheoreticalBounds
-
-
-class PLS(PLSRegression):
-
-    def transform(self, X, Y=None, copy=True):
-        return PLSRegression.transform(
-            self, X, Y=None, copy=copy)
 
 
 def build_dataset(d):
@@ -39,29 +29,6 @@ def build_dataset(d):
     y = np.concatenate(y)
 
     return X, y
-
-
-def array_with_resolution(array, resolution):
-    step = (array.data_matrix.shape[1] - 1) // 2**resolution
-
-    return array[:, ::step]
-
-
-def dict_with_resolution(d, resolution):
-    d_new = {}
-
-    for key, value in d.items():
-        d_new[key] = array_with_resolution(value, resolution)
-
-    return d_new
-
-
-def plot_with_var(mean, std, color, label, std_span=0, **kwargs):
-
-    for multiple in range(std_span, 0, -1):
-        plt.fill_between(range(len(mean)), mean - multiple *
-                         std, mean + multiple * std, color=color, alpha=0.15)
-    plt.plot(mean, label=label, color=color, **kwargs)
 
 
 def classification_test(data, n_points_segment_pow,
@@ -90,30 +57,14 @@ def classification_test(data, n_points_segment_pow,
         clf_real_bayes_synt = LongitudinalVarianceClassifier(
             real_bayes_rule=True, synthetic_covariance=True)
         clf_lda = LinearDiscriminantAnalysis(priors=[.5, .5])
-        clf_pca_centroid = GridSearchCV(Pipeline([
-            ("pca", PCA(random_state=0)),
-            ("centroid", NearestCentroid())]),
-            param_grid={
-            "pca__n_components": range(1, min(21, len(X.sample_points[0])))
-        }, cv=cv)
-        clf_pls_centroid = GridSearchCV(Pipeline([
-            ("pls", PLS()),
-            ("centroid", NearestCentroid())]),
-            param_grid={
-            "pls__n_components": range(1, min(21, len(X.sample_points[0])))
-        }, cv=cv)
-        clf_galeano = GridSearchCV(Pipeline([
-            ("pca", PCA(random_state=0)),
-            ("qda", QuadraticDiscriminantAnalysis())]),
-            param_grid={
-            "pca__n_components": range(1, min(21, len(X.sample_points[0])))
-        }, cv=cv)
-        clf_rkc = GridSearchCV(Pipeline([
-            ("rk", RK()),
-            ("lda", LinearDiscriminantAnalysis())]),
-            param_grid={
-            "rk__n_components": range(1, min(21, len(X.sample_points[0])))
-        }, cv=cv)
+        clf_pca_centroid = classifier_pca_centroid(
+            n_features=len(X.sample_points[0]), cv=cv)
+        clf_pls_centroid = classifier_pls_centroid(
+            n_features=len(X.sample_points[0]), cv=cv)
+        clf_galeano = classifier_galeano(
+            n_features=len(X.sample_points[0]), cv=cv)
+        clf_rkc = classifier_rkc(
+            n_features=len(X.sample_points[0]), cv=cv)
 
         scores[resolution] = cross_val_score(clf, X, y, cv=cv)
         scores_real_bayes[resolution] = cross_val_score(
