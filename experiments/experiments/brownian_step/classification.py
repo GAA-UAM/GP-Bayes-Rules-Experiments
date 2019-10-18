@@ -13,7 +13,19 @@ from .brownian_step_classifier import BrownianStepClassifier
 
 
 def compute_scores_list(clf, X_train_w_res_list, y_train_list,
-                        X_test_w_res_list, y_test_list):
+                        X_test_w_res_list, y_test_list, kk=False):
+    if kk:
+        lista = []
+
+        for X_train_w_res, y_train, X_test_w_res, y_test in zip(
+                X_train_w_res_list, y_train_list,
+                X_test_w_res_list, y_test_list):
+            fitted = clf.fit(X_train_w_res, y_train)
+            print(fitted.best_estimator_.named_steps["rk"].results_[0])
+            score = fitted.score(X_test_w_res, y_test)
+            lista.append(score)
+        return lista
+
     return [clf.fit(
         X_train_w_res, y_train).score(
             X_test_w_res, y_test)
@@ -29,12 +41,12 @@ def classification_test(X_train_list, y_train_list, X_test_list, y_test_list,
     # Leave one-out
     cv = 10
 
-    scores = [None] * (max_pow + 1)
-    scores_lda = [None] * (max_pow + 1)
-    scores_pca_centroid = [None] * (max_pow + 1)
-    scores_pls_centroid = [None] * (max_pow + 1)
-    scores_galeano = [None] * (max_pow + 1)
-    scores_rkc = [None] * (max_pow + 1)
+    scores = [np.nan] * (max_pow + 1)
+    scores_lda = [np.nan] * (max_pow + 1)
+    scores_pca_centroid = [np.nan] * (max_pow + 1)
+    scores_pls_centroid = [np.nan] * (max_pow + 1)
+    scores_galeano = [np.nan] * (max_pow + 1)
+    scores_rkc = [np.nan] * (max_pow + 1)
 
     for resolution in range(1, max_pow + 1):
         X_train_w_res_list = [fdatagrid_with_resolution(X_train, resolution)
@@ -81,14 +93,14 @@ def classification_test(X_train_list, y_train_list, X_test_list, y_test_list,
             X_test_w_res_list_matrices, y_test_list)
         scores_rkc[resolution] = compute_scores_list(
             clf_rkc, X_train_w_res_list_matrices, y_train_list,
-            X_test_w_res_list_matrices, y_test_list)
+            X_test_w_res_list_matrices, y_test_list, kk=True)
 
-    scores = np.array(scores[1:])
-    scores_lda = np.array(scores_lda[1:])
-    scores_pca_centroid = np.array(scores_pca_centroid[1:])
-    scores_pls_centroid = np.array(scores_pls_centroid[1:])
-    scores_galeano = np.array(scores_galeano[1:])
-    scores_rkc = np.array(scores_rkc[1:])
+    scores = np.array(scores[1:], ndmin=2)
+    scores_lda = np.array(scores_lda[1:], ndmin=2)
+    scores_pca_centroid = np.array(scores_pca_centroid[1:], ndmin=2)
+    scores_pls_centroid = np.array(scores_pls_centroid[1:], ndmin=2)
+    scores_galeano = np.array(scores_galeano[1:], ndmin=2)
+    scores_rkc = np.array(scores_rkc[1:], ndmin=2)
 
     mean_scores = np.mean(scores, axis=1)
     mean_scores_lda = np.mean(scores_lda, axis=1)

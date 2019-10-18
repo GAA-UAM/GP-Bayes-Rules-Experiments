@@ -23,7 +23,7 @@ def main():
     max_pow = 10
     n_tests = 10
     step_height = 0.3
-    train_n_samples = 100
+    train_n_samples = 20
     test_n_samples = 1000
 
     random_state = np.random.RandomState(0)

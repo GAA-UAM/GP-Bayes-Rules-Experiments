@@ -23,13 +23,12 @@ def fda_longitudinal_variance(logfda):
 
 class LongitudinalVarianceClassifier(BaseEstimator, ClassifierMixin):
 
-    def __init__(self, simple_difference_comparison=False,
+    def __init__(self,
                  real_bayes_rule=False,
                  class_variances=None,
                  synthetic_covariance=False,
                  longitudinal_variances=True,
                  linear=False):
-        self.simple_difference_comparison = simple_difference_comparison
         self.class_variances = class_variances
         self.real_bayes_rule = real_bayes_rule
         self.synthetic_covariance = synthetic_covariance
@@ -77,8 +76,8 @@ class LongitudinalVarianceClassifier(BaseEstimator, ClassifierMixin):
         # Return the classifier
         return self
 
-    def predict(self, X):
-        def scalar_product(cl, x, y):
+    def decision_function(self, X):
+        def _scalar_product_aux(cl, x, y):
             try:
                 cov_inv = np.linalg.inv(
                     self.class_covariance_matrices_[cl][1:, 1:])
@@ -89,10 +88,18 @@ class LongitudinalVarianceClassifier(BaseEstimator, ClassifierMixin):
             y = y.data_matrix[..., 0][:, 1:].T
             x = x.data_matrix[..., 0][:, 1:]
 
-            return np.diag(x @ cov_inv @ y)[:, None]
+            return x @ cov_inv @ y
+
+        def scalar_product_quadratic(cl, x, y):
+            res = _scalar_product_aux(cl, x, y)
+
+            return np.diag(res)[:, None]
+
+        def scalar_product_mean(cl, x, y):
+            return _scalar_product_aux(cl, x, y)
 
         def logterm():
-            if True:  # self.synthetic_covariance:
+            if self.synthetic_covariance:
                 mat = self.synthetic_matrix[1:, 1:]
                 dim = mat.shape[0]
                 det = np.linalg.det(mat)
@@ -106,17 +113,24 @@ class LongitudinalVarianceClassifier(BaseEstimator, ClassifierMixin):
 
             return -0.5 * (np.log(det1 / det0))
 
+        X -= self.class_mean_[0]  # Subtract first class mean
+
+        s1 = -0.5 * (scalar_product_quadratic(1, X, X) -
+                     scalar_product_quadratic(0, X, X))
+        if self.linear:
+            s1 *= 0
+        s2 = scalar_product_mean(1, X, self.m_)
+        s3 = -0.5 * scalar_product_mean(1, self.m_, self.m_)
+        s4 = logterm()
+
+        self.decision_steps_ = (s1, s2, s3, s4)
+
+        return s1 + s2 + s3 + s4
+
+    def predict(self, X):
+
         def bayes_rule(x):
-            x -= self.class_mean_[0]  # Subtract first class mean
-
-            s1 = -0.5 * (scalar_product(1, x, x) - scalar_product(0, x, x))
-            if self.linear:
-                s1 *= 0
-            s2 = scalar_product(1, x, self.m_)
-            s3 = -0.5 * scalar_product(1, self.m_, self.m_)
-            s4 = logterm()
-
-            bayes_res = ((s1 + s2 + s3 + s4) > 0).astype(int)
+            bayes_res = (self.decision_function(x) > 0).astype(int)
 
             return bayes_res
 
