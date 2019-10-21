@@ -35,8 +35,6 @@ class BrownianStepClassifier(BaseEstimator, ClassifierMixin):
         self.estimated_nonzero_mean_ = np.mean(
             class_1.data_matrix[:, self.index_nonzero_, 0])
 
-        print(self.index_zero_, self.estimated_nonzero_mean_)
-
         return self
 
     def predict(self, X):

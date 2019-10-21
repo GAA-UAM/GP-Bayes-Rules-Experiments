@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
-from experiments.brownian_step.brownian_step import main
+from experiments.brownian_step.brownian_step import main, experiment
 
-if __name__ == '__main__':
 
+@experiment.automain
+def automain():
     main()

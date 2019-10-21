@@ -40,15 +40,6 @@ def plot_with_var(mean, std, color, label, std_span=0, **kwargs):
     plt.plot(mean, label=label, color=color, **kwargs)
 
 
-def classifier_pca_centroid(n_features, cv):
-    return GridSearchCV(Pipeline([
-        ("pca", PCA(random_state=0)),
-        ("centroid", NearestCentroid())]),
-        param_grid={
-        "pca__n_components": range(1, min(21, n_features))
-    }, cv=cv)
-
-
 def classifier_pls_centroid(n_features, cv):
     return GridSearchCV(Pipeline([
         ("pls", PLS()),

@@ -145,12 +145,8 @@ class LongitudinalVarianceClassifier(BaseEstimator, ClassifierMixin):
         else:
             var = fda_longitudinal_variance(X)
 
-            if self.simple_difference_comparison:
-                cl = np.argmin(
-                    np.abs(var[:, np.newaxis] - self.class_variances_), axis=1)
-            else:
-                cl = np.argmin(
-                    var[:, np.newaxis] / self.class_variances_
-                    + np.log(self.class_variances_), axis=1)
+            cl = np.argmin(
+                var[:, np.newaxis] / self.class_variances_
+                + np.log(self.class_variances_), axis=1)
 
             return cl

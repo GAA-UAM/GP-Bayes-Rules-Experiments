@@ -7,9 +7,9 @@ import numpy as np
 import skfda
 
 from ..common.classification import (dict_with_resolution, classifier_galeano,
-                                     classifier_rkc, classifier_pca_centroid,
+                                     classifier_rkc,
                                      classifier_pls_centroid, plot_with_var)
-from .longvar import LongitudinalVarianceClassifier
+from ..common.longvar import LongitudinalVarianceClassifier
 from .theoretical import TheoreticalBounds
 
 
@@ -41,7 +41,6 @@ def classification_test(data, n_points_segment_pow,
     scores_real_bayes = [None] * (n_points_segment_pow + 1)
     scores_real_bayes_synt = [None] * (n_points_segment_pow + 1)
     scores_lda = [None] * (n_points_segment_pow + 1)
-    scores_pca_centroid = [None] * (n_points_segment_pow + 1)
     scores_pls_centroid = [None] * (n_points_segment_pow + 1)
     scores_galeano = [None] * (n_points_segment_pow + 1)
     scores_rkc = [None] * (n_points_segment_pow + 1)
@@ -57,8 +56,6 @@ def classification_test(data, n_points_segment_pow,
         clf_real_bayes_synt = LongitudinalVarianceClassifier(
             real_bayes_rule=True, synthetic_covariance=True)
         clf_lda = LinearDiscriminantAnalysis(priors=[.5, .5])
-        clf_pca_centroid = classifier_pca_centroid(
-            n_features=len(X.sample_points[0]), cv=cv)
         clf_pls_centroid = classifier_pls_centroid(
             n_features=len(X.sample_points[0]), cv=cv)
         clf_galeano = classifier_galeano(
@@ -73,8 +70,6 @@ def classification_test(data, n_points_segment_pow,
             clf_real_bayes_synt, X, y, cv=cv)
         scores_lda[resolution] = cross_val_score(
             clf_lda, X.data_matrix[..., 0][:, 1:], y, cv=cv)
-        scores_pca_centroid[resolution] = cross_val_score(
-            clf_pca_centroid, X.data_matrix[..., 0][:, 1:], y, cv=cv)
         scores_pls_centroid[resolution] = cross_val_score(
             clf_pls_centroid, X.data_matrix[..., 0][:, 1:], y, cv=cv)
         scores_galeano[resolution] = cross_val_score(
@@ -98,7 +93,6 @@ def classification_test(data, n_points_segment_pow,
     scores_real_bayes = np.array(scores_real_bayes)
     scores_real_bayes_synt = np.array(scores_real_bayes_synt)
     scores_lda = np.array(scores_lda)
-    scores_pca_centroid = np.array(scores_pca_centroid)
     scores_pls_centroid = np.array(scores_pls_centroid)
     scores_galeano = np.array(scores_galeano)
     scores_rkc = np.array(scores_rkc)
@@ -107,7 +101,6 @@ def classification_test(data, n_points_segment_pow,
     mean_scores_real_bayes = np.mean(scores_real_bayes, axis=1)
     mean_scores_real_bayes_synt = np.mean(scores_real_bayes_synt, axis=1)
     mean_scores_lda = np.mean(scores_lda, axis=1)
-    mean_scores_pca_centroid = np.mean(scores_pca_centroid, axis=1)
     mean_scores_pls_centroid = np.mean(scores_pls_centroid, axis=1)
     mean_scores_galeano = np.mean(scores_galeano, axis=1)
     mean_scores_rkc = np.mean(scores_rkc, axis=1)
@@ -117,7 +110,6 @@ def classification_test(data, n_points_segment_pow,
     std_scores_real_bayes = np.std(scores_real_bayes, axis=1)
     std_scores_real_bayes_synt = np.std(scores_real_bayes_synt, axis=1)
     std_scores_lda = np.std(scores_lda, axis=1)
-    std_scores_pca_centroid = np.std(scores_pca_centroid, axis=1)
     std_scores_pls_centroid = np.std(scores_pls_centroid, axis=1)
     std_scores_galeano = np.std(scores_galeano, axis=1)
     std_scores_rkc = np.std(scores_rkc, axis=1)
@@ -127,9 +119,8 @@ def classification_test(data, n_points_segment_pow,
     legend_scores_real_bayes = 'e-QDA'
     legend_scores_real_bayes_synt = 'QDA'
     legend_scores_lda = 'LDA'
-    legend_scores_pca_centroid = 'PCA-Centroid'
-    legend_scores_pls_centroid = 'PLS-Centroid'
-    legend_scores_galeano = 'Galeano'
+    legend_scores_pls_centroid = 'PLS+Centroid'
+    legend_scores_galeano = 'PCA+QDA'
     legend_scores_rkc = 'RKC'
     legend_theoretical = 'Theoretical'
 
@@ -148,8 +139,6 @@ def classification_test(data, n_points_segment_pow,
                   color='C2', linestyle='-.', marker='v')
     plot_with_var(mean=mean_scores_lda, std=std_scores_lda,
                   label=legend_scores_lda, color='C3', marker='s')
-    plot_with_var(mean=mean_scores_pca_centroid, std=std_scores_pca_centroid,
-                  label=legend_scores_pca_centroid, color='C4', marker='P')
     plot_with_var(mean=mean_scores_pls_centroid, std=std_scores_pls_centroid,
                   label=legend_scores_pls_centroid, color='C5', marker='X')
     plot_with_var(mean=mean_scores_galeano, std=std_scores_galeano,
