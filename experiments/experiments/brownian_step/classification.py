@@ -73,7 +73,7 @@ def classification_test(X_train_list, y_train_list, X_test_list, y_test_list,
             clf_lda, X_train_w_res_list_matrices, y_train_list,
             X_test_w_res_list_matrices, y_test_list)
         scores_qda[resolution] = compute_scores_list(
-            clf_lda, X_train_w_res_list_matrices, y_train_list,
+            clf_qda, X_train_w_res_list_matrices, y_train_list,
             X_test_w_res_list_matrices, y_test_list)
         scores_pls_centroid[resolution] = compute_scores_list(
             clf_pls_centroid, X_train_w_res_list_matrices, y_train_list,
