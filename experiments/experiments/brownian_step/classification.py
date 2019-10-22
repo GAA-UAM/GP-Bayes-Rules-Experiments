@@ -85,14 +85,17 @@ def classification_test(X_train_list, y_train_list, X_test_list, y_test_list,
             clf_rkc, X_train_w_res_list_matrices, y_train_list,
             X_test_w_res_list_matrices, y_test_list)
 
-        _run.log_scalar("scores", scores[resolution], resolution)
-        _run.log_scalar("scores_lda", scores_lda[resolution], resolution)
-        _run.log_scalar("scores_qda", scores_qda[resolution], resolution)
+        _run.log_scalar("scores", np.mean(scores[resolution]), resolution)
+        _run.log_scalar("scores_lda", np.mean(
+            scores_lda[resolution]), resolution)
+        _run.log_scalar("scores_qda", np.mean(
+            scores_qda[resolution]), resolution)
         _run.log_scalar("scores_pls_centroid",
-                        scores_pls_centroid[resolution], resolution)
+                        np.mean(scores_pls_centroid[resolution]), resolution)
         _run.log_scalar("scores_galeano",
-                        scores_galeano[resolution], resolution)
-        _run.log_scalar("scores_rkc", scores_rkc[resolution], resolution)
+                        np.mean(scores_galeano[resolution]), resolution)
+        _run.log_scalar("scores_rkc", np.mean(
+            scores_rkc[resolution]), resolution)
 
     scores = np.array(scores[1:], ndmin=2)
     scores_lda = np.array(scores_lda[1:], ndmin=2)
