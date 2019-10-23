@@ -1,4 +1,5 @@
 import tempfile
+import scipy.stats
 
 from sklearn.discriminant_analysis import (LinearDiscriminantAnalysis,
                                            QuadraticDiscriminantAnalysis)
@@ -14,6 +15,27 @@ from ..common.classification import (fdatagrid_with_resolution,
 from .brownian_bridge_classifier import BrownianBridgeClassifier
 
 
+def prob_error_brownian(end_position):
+    dist = scipy.stats.norm(scale=np.sqrt(end_position))
+
+    D = np.sqrt(-np.log(1 - end_position) * (1 - end_position))
+
+    return dist.cdf(D) - dist.cdf(-D)
+
+
+def prob_error_brownian_bridge(end_position):
+    dist = scipy.stats.norm(scale=np.sqrt(end_position - end_position**2))
+
+    D = np.sqrt(-np.log(1 - end_position) * (1 - end_position))
+
+    return 2 * dist.cdf(-D)
+
+
+def bayes_error(end_position):
+    return (0.5 * prob_error_brownian(end_position)
+            + 0.5 * prob_error_brownian_bridge(end_position))
+
+
 def compute_scores_list(clf, X_train_w_res_list, y_train_list,
                         X_test_w_res_list, y_test_list):
     return [clf.fit(
@@ -27,7 +49,7 @@ def compute_scores_list(clf, X_train_w_res_list, y_train_list,
 
 @experiment.capture
 def classification_test(X_train_list, y_train_list, X_test_list, y_test_list,
-                        max_pow, _run):
+                        max_pow, end_position, _run):
 
     # Leave one-out
     cv = 10
@@ -165,7 +187,7 @@ def classification_test(X_train_list, y_train_list, X_test_list, y_test_list,
 
     plt.xlim(0, max_pow)
     plt.ylim(top=1.05)
-    plt.axhline(1, linestyle=':', color='black')
+    plt.axhline(1 - bayes_error(end_position), linestyle=':', color='black')
 
     with tempfile.NamedTemporaryFile(suffix=".pdf") as tmpfile:
         plt.savefig(tmpfile, format="pdf")
