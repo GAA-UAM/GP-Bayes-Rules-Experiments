@@ -11,7 +11,7 @@ from ..common.classification import (fdatagrid_with_resolution,
                                      classifier_galeano,
                                      classifier_rkc,
                                      classifier_pls_centroid, plot_with_var)
-from .brownian_step_classifier import BrownianStepClassifier
+from .brownian_bridge_classifier import BrownianBridgeClassifier
 
 
 def compute_scores_list(clf, X_train_w_res_list, y_train_list,
@@ -51,7 +51,7 @@ def classification_test(X_train_list, y_train_list, X_test_list, y_test_list,
 
         n_features = len(X_train_w_res_list[0].sample_points[0])
 
-        clf = BrownianStepClassifier()
+        clf = BrownianBridgeClassifier()
         clf_lda = LinearDiscriminantAnalysis(
             priors=[.5, .5])
         clf_qda = QuadraticDiscriminantAnalysis(
@@ -125,7 +125,7 @@ def classification_test(X_train_list, y_train_list, X_test_list, y_test_list,
     std_scores_galeano = np.std(scores_galeano, axis=1)
     std_scores_rkc = np.std(scores_rkc, axis=1)
 
-    legend_scores = 'Step-Rule'
+    legend_scores = 'Brownian-Bridge rule'
     legend_scores_lda = 'LDA'
     legend_scores_qda = 'QDA'
     legend_scores_pls_centroid = 'PLS+Centroid'
@@ -160,7 +160,7 @@ def classification_test(X_train_list, y_train_list, X_test_list, y_test_list,
                            for i in range(1, max_pow + 1)])))
     plt.xlabel("$N_b$")
     plt.ylabel("Accuracy")
-    leg = plt.legend(loc="upper left")
+    leg = plt.legend()
     leg.get_frame().set_alpha(1)
 
     plt.xlim(0, max_pow)

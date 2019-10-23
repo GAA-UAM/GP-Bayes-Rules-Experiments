@@ -1,5 +1,5 @@
 from sklearn.discriminant_analysis import (
-    LinearDiscriminantAnalysis)
+    LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis)
 from sklearn.model_selection import cross_val_score
 
 import matplotlib.pyplot as plt
@@ -52,7 +52,8 @@ def classification_test(data, n_points_segment_pow,
         X, y = build_dataset(d)
 
         clf = LongitudinalVarianceClassifier()
-        clf_real_bayes = LongitudinalVarianceClassifier(real_bayes_rule=True)
+        clf_real_bayes = QuadraticDiscriminantAnalysis(
+            priors=[.5, .5])
         clf_real_bayes_synt = LongitudinalVarianceClassifier(
             real_bayes_rule=True, synthetic_covariance=True)
         clf_lda = LinearDiscriminantAnalysis(priors=[.5, .5])
