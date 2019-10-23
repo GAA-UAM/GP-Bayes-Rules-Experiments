@@ -1,3 +1,5 @@
+import matplotlib
+
 import matplotlib.pyplot as plt
 import numpy as np
 import skfda
@@ -37,12 +39,21 @@ def generate_data(n_samples=1000, n_features=2**10 + 1, end_position=1,
     return X, y
 
 
+def configure_matplotlib():
+    plt.rc('axes', labelsize=20)    # fontsize of the x and y labels
+    matplotlib.rcParams['ps.useafm'] = True
+    matplotlib.rcParams['pdf.use14corefonts'] = True
+    matplotlib.rcParams['text.usetex'] = True
+
+
 @experiment.capture
 def main(max_pow, n_tests, end_position, train_n_samples, test_n_samples,
          random_state_train_seed, random_state_test_seed):
 
     random_state = np.random.RandomState(random_state_train_seed)
     random_state_test = np.random.RandomState(random_state_test_seed)
+
+    configure_matplotlib()
 
     X_train_list, y_train_list = zip(*[generate_data(
         n_samples=train_n_samples,

@@ -66,7 +66,7 @@ def classification_test(data, n_points_segment_pow,
 
         scores[resolution] = cross_val_score(clf, X, y, cv=cv)
         scores_real_bayes[resolution] = cross_val_score(
-            clf_real_bayes, X, y, cv=cv)
+            clf_real_bayes, X.data_matrix[..., 0][:, 1:], y, cv=cv)
         scores_real_bayes_synt[resolution] = cross_val_score(
             clf_real_bayes_synt, X, y, cv=cv)
         scores_lda[resolution] = cross_val_score(
@@ -117,8 +117,8 @@ def classification_test(data, n_points_segment_pow,
     std_scores_theoretical = np.array(std_scores_theoretical)
 
     legend_scores = 'NP-Rule'
-    legend_scores_real_bayes = 'e-QDA'
-    legend_scores_real_bayes_synt = 'QDA'
+    legend_scores_real_bayes = 'QDA'
+    legend_scores_real_bayes_synt = 'Brownian-QDA'
     legend_scores_lda = 'LDA'
     legend_scores_pls_centroid = 'PLS+Centroid'
     legend_scores_galeano = 'PCA+QDA'
