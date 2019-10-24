@@ -72,5 +72,3 @@ def main(max_pow, n_tests, end_position, train_n_samples, test_n_samples,
 
     classification_test(X_train_list, y_train_list,
                         X_test_list, y_test_list, max_pow)
-
-    plt.show()
