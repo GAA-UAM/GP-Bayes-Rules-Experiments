@@ -6,27 +6,15 @@ import numpy as np
 from ..common.classification import plot_with_var
 
 
-def plot_scores(max_pow, scores, scores_lda, scores_qda,
-                scores_pls_centroid, scores_galeano, scores_rkc, _run):
-    mean_scores = np.mean(scores, axis=1)
-    mean_scores_lda = np.mean(scores_lda, axis=1)
-    mean_scores_qda = np.mean(scores_qda, axis=1)
-    mean_scores_pls_centroid = np.mean(scores_pls_centroid, axis=1)
-    mean_scores_galeano = np.mean(scores_galeano, axis=1)
-    mean_scores_rkc = np.mean(scores_rkc, axis=1)
+def plot_scores(max_pow, scores, legend_scores_optimal, _run):
 
-    std_scores = np.std(scores, axis=1)
-    std_scores_lda = np.std(scores_lda, axis=1)
-    std_scores_qda = np.std(scores_qda, axis=1)
-    std_scores_pls_centroid = np.std(scores_pls_centroid, axis=1)
-    std_scores_galeano = np.std(scores_galeano, axis=1)
-    std_scores_rkc = np.std(scores_rkc, axis=1)
+    mean_scores = {key: np.mean(s, axis=1) for key, s in scores.items()}
+    std_scores = {key: np.std(s, axis=1) for key, s in scores.items()}
 
-    legend_scores = 'Step-Rule'
     legend_scores_lda = 'LDA'
     legend_scores_qda = 'QDA'
     legend_scores_pls_centroid = 'PLS+Centroid'
-    legend_scores_galeano = 'PCA+QDA'
+    legend_scores_pca_qda = 'PCA+QDA'
     legend_scores_rkc = 'RKC'
 
     # plt.title('Accuracy')
@@ -34,23 +22,25 @@ def plot_scores(max_pow, scores, scores_lda, scores_qda,
 
     std_span = 1
 
-    plot_with_var(mean=mean_scores, std=std_scores,
+    plot_with_var(mean=mean_scores['optimal'], std=std_scores['optimal'],
                   std_span=std_span,
-                  label=legend_scores, color='C0', linestyle=':', marker='o')
-    plot_with_var(mean=mean_scores_qda, std=std_scores_qda,
+                  label=legend_scores_optimal, color='C0', linestyle=':',
+                  marker='o')
+    plot_with_var(mean=mean_scores['qda'], std=std_scores['qda'],
                   label=legend_scores_qda,
                   std_span=std_span,
                   color='C2', linestyle='-.', marker='v')
-    plot_with_var(mean=mean_scores_lda, std=std_scores_lda,
+    plot_with_var(mean=mean_scores['pca_qda'], std=std_scores['pca_qda'],
+                  std_span=std_span,
+                  label=legend_scores_pca_qda, color='C6', marker='p')
+    plot_with_var(mean=mean_scores['lda'], std=std_scores['lda'],
                   std_span=std_span,
                   label=legend_scores_lda, color='C3', marker='s')
-    plot_with_var(mean=mean_scores_pls_centroid, std=std_scores_pls_centroid,
+    plot_with_var(mean=mean_scores['pls_centroid'],
+                  std=std_scores['pls_centroid'],
                   std_span=std_span,
                   label=legend_scores_pls_centroid, color='C5', marker='X')
-    plot_with_var(mean=mean_scores_galeano, std=std_scores_galeano,
-                  std_span=std_span,
-                  label=legend_scores_galeano, color='C6', marker='p')
-    plot_with_var(mean=mean_scores_rkc, std=std_scores_rkc,
+    plot_with_var(mean=mean_scores['rkc'], std=std_scores['rkc'],
                   std_span=std_span,
                   label=legend_scores_rkc, color='C7', marker='*')
     plt.xticks(*list(zip(*[(i - 1, 2**i)
@@ -68,6 +58,8 @@ def plot_scores(max_pow, scores, scores_lda, scores_qda,
         plt.savefig(tmpfile, format="pdf")
         if _run is not None:
             _run.add_artifact(tmpfile.name, name="plot.pdf")
+
+    plt.show()
 
 
 def plot_experiment(id):

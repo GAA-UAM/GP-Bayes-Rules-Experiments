@@ -1,13 +1,16 @@
 
 from sklearn.discriminant_analysis import (LinearDiscriminantAnalysis,
                                            QuadraticDiscriminantAnalysis)
+from sklearn.metrics import confusion_matrix
 
 import numpy as np
 
 from . import experiment
 from . import plot
 from ..common.classification import (fdatagrid_with_resolution,
-                                     classifier_galeano,
+                                     classifier_lda,
+                                     classifier_qda,
+                                     classifier_pca_qda,
                                      classifier_rkc,
                                      classifier_pls_centroid)
 from .brownian_step_classifier import BrownianStepClassifier
@@ -15,13 +18,18 @@ from .brownian_step_classifier import BrownianStepClassifier
 
 def compute_scores_list(clf, X_train_w_res_list, y_train_list,
                         X_test_w_res_list, y_test_list):
-    return [clf.fit(
-        X_train_w_res, y_train).score(
-            X_test_w_res, y_test)
-        for (X_train_w_res, y_train,
-             X_test_w_res, y_test)
-        in zip(X_train_w_res_list, y_train_list,
-               X_test_w_res_list, y_test_list)]
+
+    scores = []
+    confusion_matrices = []
+
+    for (X_train_w_res, y_train, X_test_w_res, y_test) in zip(
+            X_train_w_res_list, y_train_list, X_test_w_res_list, y_test_list):
+        clf.fit(X_train_w_res, y_train)
+        scores.append(clf.score(X_test_w_res, y_test))
+        confusion_matrices.append(confusion_matrix(
+            y_test, clf.predict(X_test_w_res)))
+
+    return scores, confusion_matrices
 
 
 @experiment.capture
@@ -31,12 +39,24 @@ def classification_test(X_train_list, y_train_list, X_test_list, y_test_list,
     # Leave one-out
     cv = 10
 
-    scores = [np.nan] * (max_pow + 1)
-    scores_lda = [np.nan] * (max_pow + 1)
-    scores_qda = [np.nan] * (max_pow + 1)
-    scores_pls_centroid = [np.nan] * (max_pow + 1)
-    scores_galeano = [np.nan] * (max_pow + 1)
-    scores_rkc = [np.nan] * (max_pow + 1)
+    scores = {}
+    confusion_matrices = {}
+    classifiers_fd = {
+        'optimal': lambda **kwargs: BrownianStepClassifier()
+    }
+    classifiers_matrix = {
+        'lda': classifier_lda,
+        'qda': classifier_qda,
+        'pls_centroid': classifier_pls_centroid,
+        'pca_qda': classifier_pca_qda,
+        'rkc': classifier_rkc
+    }
+
+    classifiers_all = {**classifiers_fd, **classifiers_matrix}
+
+    for key in classifiers_all:
+        scores[key] = [np.nan] * (max_pow + 1)
+        confusion_matrices[key] = [np.nan] * (max_pow + 1)
 
     for resolution in range(1, max_pow + 1):
         X_train_w_res_list = [fdatagrid_with_resolution(X_train, resolution)
@@ -50,71 +70,36 @@ def classification_test(X_train_list, y_train_list, X_test_list, y_test_list,
 
         n_features = len(X_train_w_res_list[0].sample_points[0])
 
-        clf = BrownianStepClassifier()
-        clf_lda = LinearDiscriminantAnalysis(
-            priors=[.5, .5])
-        clf_qda = QuadraticDiscriminantAnalysis(
-            priors=[.5, .5])
-        clf_pls_centroid = classifier_pls_centroid(
-            n_features=n_features,
-            cv=cv)
-        clf_galeano = classifier_galeano(
-            n_features=n_features,
-            cv=cv)
-        clf_rkc = classifier_rkc(
-            n_features=n_features,
-            cv=cv)
+        for key, value in classifiers_all.items():
+            clf = value(n_features=n_features, cv=cv)
 
-        scores[resolution] = compute_scores_list(
-            clf, X_train_w_res_list, y_train_list,
-            X_test_w_res_list, y_test_list)
-        scores_lda[resolution] = compute_scores_list(
-            clf_lda, X_train_w_res_list_matrices, y_train_list,
-            X_test_w_res_list_matrices, y_test_list)
-        scores_qda[resolution] = compute_scores_list(
-            clf_qda, X_train_w_res_list_matrices, y_train_list,
-            X_test_w_res_list_matrices, y_test_list)
-        scores_pls_centroid[resolution] = compute_scores_list(
-            clf_pls_centroid, X_train_w_res_list_matrices, y_train_list,
-            X_test_w_res_list_matrices, y_test_list)
-        scores_galeano[resolution] = compute_scores_list(
-            clf_galeano, X_train_w_res_list_matrices, y_train_list,
-            X_test_w_res_list_matrices, y_test_list)
-        scores_rkc[resolution] = compute_scores_list(
-            clf_rkc, X_train_w_res_list_matrices, y_train_list,
-            X_test_w_res_list_matrices, y_test_list)
+            if key in classifiers_fd:
+                X_train = X_train_w_res_list
+                X_test = X_test_w_res_list
+            else:
+                X_train = X_train_w_res_list_matrices
+                X_test = X_test_w_res_list_matrices
 
-        _run.log_scalar("scores", np.mean(scores[resolution]), resolution)
-        _run.log_scalar("scores_lda", np.mean(
-            scores_lda[resolution]), resolution)
-        _run.log_scalar("scores_qda", np.mean(
-            scores_qda[resolution]), resolution)
-        _run.log_scalar("scores_pls_centroid",
-                        np.mean(scores_pls_centroid[resolution]), resolution)
-        _run.log_scalar("scores_galeano",
-                        np.mean(scores_galeano[resolution]), resolution)
-        _run.log_scalar("scores_rkc", np.mean(
-            scores_rkc[resolution]), resolution)
+            s, cf = compute_scores_list(
+                clf, X_train, y_train_list,
+                X_test, y_test_list)
+            scores[key][resolution] = s
+            confusion_matrices[key][resolution] = cf
 
-    scores = np.array(scores[1:], ndmin=2)
-    scores_lda = np.array(scores_lda[1:], ndmin=2)
-    scores_qda = np.array(scores_qda[1:], ndmin=2)
-    scores_pls_centroid = np.array(scores_pls_centroid[1:], ndmin=2)
-    scores_galeano = np.array(scores_galeano[1:], ndmin=2)
-    scores_rkc = np.array(scores_rkc[1:], ndmin=2)
+            _run.log_scalar("scores_" + key,
+                            np.mean(scores[key][resolution]), resolution)
+
+            _run.info['scores'] = scores
+            _run.info['confusion_matrices'] = confusion_matrices
+
+    for key in classifiers_all:
+        scores[key] = np.array(scores[key][1:], ndmin=2)
+        print(scores[key].shape)
 
     _run.info['scores'] = scores
-    _run.info['scores_lda'] = scores_lda
-    _run.info['scores_qda'] = scores_qda
-    _run.info['scores_pls_centroid'] = scores_pls_centroid
-    _run.info['scores_galeano'] = scores_galeano
-    _run.info['scores_rkc'] = scores_rkc
+    _run.info['confusion_matrices'] = confusion_matrices
 
     plot.plot_scores(max_pow=max_pow,
                      scores=scores,
-                     scores_lda=scores_lda,
-                     scores_qda=scores_qda,
-                     scores_pls_centroid=scores_pls_centroid,
-                     scores_galeano=scores_galeano,
-                     scores_rkc=scores_rkc,
+                     legend_scores_optimal='Step-Rule',
                      _run=_run)

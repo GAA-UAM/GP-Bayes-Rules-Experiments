@@ -68,7 +68,7 @@ def main(max_pow, n_tests, end_position, train_n_samples, test_n_samples,
         random_state=random_state_test)
         for _ in range(n_tests)])
 
-    X_train_list[0].plot(sample_labels=y_train_list[0])
+    X_train_list[0].plot(group=y_train_list[0])
 
     classification_test(X_train_list, y_train_list,
                         X_test_list, y_test_list, max_pow)

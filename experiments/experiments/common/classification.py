@@ -5,6 +5,7 @@ from sklearn.discriminant_analysis import (
 from sklearn.model_selection import GridSearchCV
 from sklearn.neighbors import NearestCentroid
 from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
 from fda_methods.rk import RK
 import matplotlib.pyplot as plt
@@ -13,8 +14,7 @@ import matplotlib.pyplot as plt
 class PLS(PLSRegression):
 
     def transform(self, X, Y=None, copy=True):
-        return PLSRegression.transform(
-            self, X, Y=None, copy=copy)
+        return PLSRegression.predict(self, X, copy)
 
 
 def fdatagrid_with_resolution(array, resolution):
@@ -40,8 +40,17 @@ def plot_with_var(mean, std, color, label, std_span=0, **kwargs):
     plt.plot(mean, label=label, color=color, **kwargs)
 
 
+def classifier_lda(n_features, cv):
+    return LinearDiscriminantAnalysis(priors=[.5, .5])
+
+
+def classifier_qda(n_features, cv):
+    return QuadraticDiscriminantAnalysis(priors=[.5, .5])
+
+
 def classifier_pls_centroid(n_features, cv):
     return GridSearchCV(Pipeline([
+        ("scaler", StandardScaler()),
         ("pls", PLS()),
         ("centroid", NearestCentroid())]),
         param_grid={
@@ -49,8 +58,9 @@ def classifier_pls_centroid(n_features, cv):
     }, cv=cv)
 
 
-def classifier_galeano(n_features, cv):
+def classifier_pca_qda(n_features, cv):
     return GridSearchCV(Pipeline([
+        ("scaler", StandardScaler()),
         ("pca", PCA(random_state=0)),
         ("qda", QuadraticDiscriminantAnalysis())]),
         param_grid={
