@@ -2,13 +2,14 @@ from sklearn.cross_decomposition import PLSRegression
 from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import (
     LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis)
+from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import GridSearchCV
 from sklearn.neighbors import NearestCentroid
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
 from fda_methods.rk import RK
-import matplotlib.pyplot as plt
+import numpy as np
 
 
 class PLS(PLSRegression):
@@ -30,14 +31,6 @@ def dict_with_resolution(d, resolution):
         d_new[key] = fdatagrid_with_resolution(value, resolution)
 
     return d_new
-
-
-def plot_with_var(mean, std, color, label, std_span=0, **kwargs):
-
-    for multiple in range(std_span, 0, -1):
-        plt.fill_between(range(len(mean)), mean - multiple *
-                         std, mean + multiple * std, color=color, alpha=0.15)
-    plt.plot(mean, label=label, color=color, **kwargs)
 
 
 def classifier_lda(n_features, cv):
@@ -75,3 +68,92 @@ def classifier_rkc(n_features, cv):
         param_grid={
         "rk__n_components": range(1, min(21, n_features))
     }, cv=cv)
+
+
+def compute_scores_list(clf, X_train_w_res_list, y_train_list,
+                        X_test_w_res_list, y_test_list):
+
+    scores = []
+    confusion_matrices = []
+
+    for (X_train_w_res, y_train, X_test_w_res, y_test) in zip(
+            X_train_w_res_list, y_train_list, X_test_w_res_list, y_test_list):
+        clf.fit(X_train_w_res, y_train)
+        scores.append(clf.score(X_test_w_res, y_test))
+        confusion_matrices.append(confusion_matrix(
+            y_test, clf.predict(X_test_w_res)))
+
+    return scores, confusion_matrices
+
+
+def classification_test_common(X_train_list, y_train_list,
+                               X_test_list, y_test_list,
+                               max_pow, _run,
+                               additional_classifiers_fd={},
+                               additional_classifiers_matrix={}):
+
+    # Leave one-out
+    cv = 10
+
+    scores = {}
+    confusion_matrices = {}
+    classifiers_fd = {
+        **additional_classifiers_fd
+    }
+    classifiers_matrix = {
+        'lda': classifier_lda,
+        'qda': classifier_qda,
+        'pls_centroid': classifier_pls_centroid,
+        'pca_qda': classifier_pca_qda,
+        'rkc': classifier_rkc,
+        **additional_classifiers_matrix
+    }
+
+    classifiers_all = {**classifiers_fd, **classifiers_matrix}
+
+    for key in classifiers_all:
+        scores[key] = [np.nan] * (max_pow + 1)
+        confusion_matrices[key] = [np.nan] * (max_pow + 1)
+
+    for resolution in range(1, max_pow + 1):
+        X_train_w_res_list = [fdatagrid_with_resolution(X_train, resolution)
+                              for X_train in X_train_list]
+        X_test_w_res_list = [fdatagrid_with_resolution(X_test, resolution)
+                             for X_test in X_test_list]
+        X_train_w_res_list_matrices = [
+            X.data_matrix[..., 0][:, 1:] for X in X_train_w_res_list]
+        X_test_w_res_list_matrices = [
+            X.data_matrix[..., 0][:, 1:] for X in X_test_w_res_list]
+
+        n_features = len(X_train_w_res_list[0].sample_points[0])
+
+        for key, value in classifiers_all.items():
+            clf = value(n_features=n_features, cv=cv)
+
+            if key in classifiers_fd:
+                X_train = X_train_w_res_list
+                X_test = X_test_w_res_list
+            else:
+                X_train = X_train_w_res_list_matrices
+                X_test = X_test_w_res_list_matrices
+
+            s, cf = compute_scores_list(
+                clf, X_train, y_train_list,
+                X_test, y_test_list)
+            scores[key][resolution] = s
+            confusion_matrices[key][resolution] = cf
+
+            _run.log_scalar("scores_" + key,
+                            np.mean(scores[key][resolution]), resolution)
+
+            _run.info['scores'] = scores
+            _run.info['confusion_matrices'] = confusion_matrices
+
+    for key in classifiers_all:
+        scores[key] = np.array(scores[key][1:], ndmin=2)
+        print(scores[key].shape)
+
+    _run.info['scores'] = scores
+    _run.info['confusion_matrices'] = confusion_matrices
+
+    return scores, confusion_matrices
