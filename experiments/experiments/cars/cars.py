@@ -1,23 +1,35 @@
 import copy
 
-import matplotlib
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import skfda
 
+from . import experiment
+from ..common.plot import configure_matplotlib
 from .classification import classification_test
 
 
-# Change for different plots
-asset_labels_used = ['TSLA', 'GM']
-# asset_labels_used = ['TSLA', 'ETR:BMW']
-# asset_labels_used = ['GM', 'ETR:BMW']
-n_points_segment_pow = 5
+@experiment.config
+def config():
+    max_pow = 5  # @UnusedVariable
+    compare_tesla = False
+    compare_gm = False
+    compare_bmw = False
+    data_path = ""
+    assert data_path
+
+    asset_labels_used = []
+    if compare_tesla:
+        asset_labels_used.append('TSLA')
+    if compare_gm:
+        asset_labels_used.append('GM')
+    if compare_bmw:
+        asset_labels_used.append('ETR:BMW')
+    assert len(asset_labels_used) == 2
 
 
-def plot_trajectories(trajectories, print_left=False):
+def plot_trajectories(trajectories, max_pow, print_left=False):
     colors = ['blue', 'red', 'green']
 
     fig = plt.figure()
@@ -38,7 +50,7 @@ def plot_trajectories(trajectories, print_left=False):
     }
 
     ax.legend(lines, [dict_names.get(l, l) for l in labels], loc="upper left")
-    ax.set_xlim(0, 2**n_points_segment_pow)
+    ax.set_xlim(0, 2**max_pow)
     ax.set_xlabel(r"$t$")
     if print_left:
         ax.set_ylabel("Log returns")
@@ -46,15 +58,8 @@ def plot_trajectories(trajectories, print_left=False):
     return fig
 
 
-def configure_matplotlib():
-    plt.rc('axes', labelsize=20)    # fontsize of the x and y labels
-    matplotlib.rcParams['ps.useafm'] = True
-    matplotlib.rcParams['pdf.use14corefonts'] = True
-    matplotlib.rcParams['text.usetex'] = True
-
-
-def get_original_data():
-    asset_data = pd.read_hdf("/home/carlos/Dropbox/CarsData.h5")
+def get_original_data(data_path):
+    asset_data = pd.read_hdf(data_path)
 
     # Time series of closing prices [in Pyhton, a DataFrame]
     data = asset_data[' Close']
@@ -78,13 +83,13 @@ def compute_log_returns(data):
     return dict_series
 
 
-def split_data(data):
+def split_data(data, max_pow):
 
     first_key, *_ = data
 
     # We will select segments of data with a power of two plus one
     # number of points and discard the remaining data
-    n_points_segment = 2**n_points_segment_pow + 1
+    n_points_segment = 2**max_pow + 1
     n_segments = data[first_key].shape[0] // n_points_segment
 
     dict_subseries = {}
@@ -110,15 +115,15 @@ def transform_to_increments(data):
     return dict_increments
 
 
-def get_real_data():
+def get_real_data(data_path, max_pow):
 
-    original_data = get_original_data()
+    original_data = get_original_data(data_path)
 
     # original_data.plot(subplots=True, grid=True, figsize=(8, 6))
 
     log_returns = compute_log_returns(original_data)
 
-    splitted_data = split_data(log_returns)
+    splitted_data = split_data(log_returns, max_pow)
     incr_data = transform_to_increments(splitted_data)
 
     return incr_data
@@ -152,10 +157,11 @@ def filter_data(data, keys):
     return {k: data[k] for k in keys}
 
 
-def main():
+@experiment.capture
+def main(data_path, asset_labels_used, max_pow):
     configure_matplotlib()
 
-    real_data = get_real_data()
+    real_data = get_real_data(data_path, max_pow)
     real_data = filter_data(real_data, asset_labels_used)
 
     class_variances = compute_class_variances(real_data)
@@ -169,11 +175,11 @@ def main():
 
     data = real_data
 
-    plot_trajectories(data, asset_labels_used)
+    # plot_trajectories(data, max_pow, asset_labels_used)
     # fig.savefig("/home/carlos/kk2.pdf", bbox_inches="tight", pad_inches=0)
 
     classification_test(data,
-                        n_points_segment_pow=n_points_segment_pow,
+                        max_pow=max_pow,
                         class_variances=class_variances)
 
     plt.show()

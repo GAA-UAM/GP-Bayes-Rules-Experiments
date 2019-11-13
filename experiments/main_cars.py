@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
-from experiments.cars.cars import main
+from experiments.cars.cars import main, experiment
 
-if __name__ == '__main__':
 
+@experiment.automain
+def automain():
     main()

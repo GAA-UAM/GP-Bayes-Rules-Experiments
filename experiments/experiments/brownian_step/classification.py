@@ -9,7 +9,7 @@ def classification_test(X_train_list, y_train_list, X_test_list, y_test_list,
                         max_pow, _run):
 
     classifiers_fd = {
-        'optimal': lambda **kwargs: BrownianStepClassifier()
+        'optimal': lambda **_: BrownianStepClassifier()
     }
 
     scores, _ = classification_test_common(

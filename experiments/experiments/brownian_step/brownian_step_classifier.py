@@ -1,15 +1,7 @@
-import itertools
-
 import scipy.stats
 from sklearn.base import BaseEstimator, ClassifierMixin
 
 import numpy as np
-
-
-def hodges_lehmann_mean(array):
-    return np.median(
-        [(a + b) / 2 for a, b
-         in itertools.combinations_with_replacement(array, 2)])
 
 
 class BrownianStepClassifier(BaseEstimator, ClassifierMixin):
@@ -18,10 +10,6 @@ class BrownianStepClassifier(BaseEstimator, ClassifierMixin):
         pass
 
     def fit(self, X, y):
-
-        # Subtract class 0 mean
-        # class_0_mean = X[y == 0].mean()
-        # X = X - class_0_mean
 
         class_1 = X[y == 1]
         diff = class_1.data_matrix[:, 1:, 0] - class_1.data_matrix[:, :-1, 0]
