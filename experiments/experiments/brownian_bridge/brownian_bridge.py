@@ -19,6 +19,8 @@ def config():
     random_state_train_seed = 0  # @UnusedVariable
     random_state_test_seed = 1  # @UnusedVariable
 
+    show_plot = False  # @UnusedVariable
+
 
 def generate_data(n_samples=1000, n_features=2**10 + 1, end_position=1,
                   random_state=None):

@@ -89,5 +89,3 @@ def plot_scores(max_pow, scores, legend_scores_optimal, _run, optimal_accuracy,
         plt.savefig(tmpfile, format="pdf")
         if _run is not None:
             _run.add_artifact(tmpfile.name, name="plot.pdf")
-
-    plt.show()

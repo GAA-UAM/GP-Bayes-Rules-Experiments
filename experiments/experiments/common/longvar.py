@@ -105,13 +105,18 @@ class LongitudinalVarianceClassifier(BaseEstimator, ClassifierMixin):
                 det = np.linalg.det(mat)
                 det1 = self.class_variances_[1]**dim * det
                 det0 = self.class_variances_[0]**dim * det
+
+                return -0.5 * (
+                    dim * np.log(self.class_variances_[1])
+                    - dim * np.log(self.class_variances_[0]))
+
             else:
                 det1 = np.linalg.det(
                     self.class_covariance_matrices_[1][1:, 1:])
                 det0 = np.linalg.det(
                     self.class_covariance_matrices_[0][1:, 1:])
 
-            return -0.5 * (np.log(det1 / det0))
+                return -0.5 * (np.log(det1 / det0))
 
         X -= self.class_mean_[0]  # Subtract first class mean
 

@@ -12,7 +12,8 @@ from .classification import classification_test
 def config():
     max_pow = 10  # @UnusedVariable
     n_tests = 100  # @UnusedVariable
-    step_height = 0.3  # @UnusedVariable
+    class0_var = 1  # @UnusedVariable
+    class1_var = 1.3  # @UnusedVariable
     train_n_samples = 1000  # @UnusedVariable
     test_n_samples = 1000  # @UnusedVariable
 
@@ -23,12 +24,19 @@ def config():
 
 
 def generate_data(n_samples=1000, n_features=2**10 + 1,
-                  step_position=0.5, step_height=1, random_state=None):
-    X = skfda.datasets.make_gaussian_process(
-        n_samples=n_samples, n_features=n_features, random_state=random_state)
+                  class0_var=1,
+                  class1_var=1,
+                  random_state=None):
 
-    X[n_samples // 2:].data_matrix[
-        :, X.sample_points[0] > step_position] += step_height
+    X = skfda.datasets.make_gaussian_process(
+        n_samples=n_samples // 2, n_features=n_features,
+        cov=skfda.misc.covariances.Brownian(variance=class0_var),
+        random_state=random_state)
+
+    X = X.concatenate(skfda.datasets.make_gaussian_process(
+        n_samples=n_samples // 2, n_features=n_features,
+        cov=skfda.misc.covariances.Brownian(variance=class1_var),
+        random_state=random_state))
 
     y = np.zeros(n_samples, dtype=int)
     y[n_samples // 2:] += 1
@@ -44,7 +52,8 @@ def configure_matplotlib():
 
 
 @experiment.capture
-def main(max_pow, n_tests, step_height, train_n_samples, test_n_samples,
+def main(max_pow, n_tests, class0_var, class1_var,
+         train_n_samples, test_n_samples,
          random_state_train_seed, random_state_test_seed):
 
     random_state = np.random.RandomState(random_state_train_seed)
@@ -55,13 +64,15 @@ def main(max_pow, n_tests, step_height, train_n_samples, test_n_samples,
     X_train_list, y_train_list = zip(*[generate_data(
         n_samples=train_n_samples,
         n_features=2**max_pow + 1,
-        step_height=step_height,
+        class0_var=class0_var,
+        class1_var=class1_var,
         random_state=random_state)
         for _ in range(n_tests)])
     X_test_list, y_test_list = zip(*[generate_data(
         n_samples=test_n_samples,
         n_features=2**max_pow + 1,
-        step_height=step_height,
+        class0_var=class0_var,
+        class1_var=class1_var,
         random_state=random_state_test)
         for _ in range(n_tests)])
 

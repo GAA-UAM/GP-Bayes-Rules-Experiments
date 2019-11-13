@@ -28,6 +28,8 @@ def config():
         asset_labels_used.append('ETR:BMW')
     assert len(asset_labels_used) == 2
 
+    show_plot = False  # @UnusedVariable
+
 
 def plot_trajectories(trajectories, max_pow, print_left=False):
     colors = ['blue', 'red', 'green']
@@ -166,12 +168,12 @@ def main(data_path, asset_labels_used, max_pow):
 
     class_variances = compute_class_variances(real_data)
 
-    item, *_ = real_data.values()
+    # item, *_ = real_data.values()
 
-    synthetic_data = get_synthetic_data(
-        item.n_samples,
-        len(item.sample_points[0]),
-        class_variances)
+    # synthetic_data = get_synthetic_data(
+    #    item.n_samples,
+    #    len(item.sample_points[0]),
+    #    class_variances)
 
     data = real_data
 

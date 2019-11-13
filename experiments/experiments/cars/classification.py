@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import skfda
 
@@ -29,7 +30,7 @@ def build_dataset(d):
 @experiment.capture
 def classification_test(data, max_pow,
                         class_variances,
-                        _run):
+                        _run, show_plot=False):
 
     X, y = build_dataset(data)
 
@@ -63,12 +64,14 @@ def classification_test(data, max_pow,
     theoretical_mean = np.array(mean_scores_theoretical)
     theoretical_std = np.array(std_scores_theoretical)
 
-    plot.plot_scores(max_pow=max_pow,
-                     scores=scores,
-                     legend_scores_optimal='NP-Rule',
-                     _run=None,
-                     optimal_accuracy=1,
-                     std_span=0,
-                     theoretical_mean=theoretical_mean,
-                     theoretical_std=theoretical_std,
-                     start_pow=0)
+    if show_plot:
+        plot.plot_scores(max_pow=max_pow,
+                         scores=scores,
+                         legend_scores_optimal='NP-Rule',
+                         _run=None,
+                         optimal_accuracy=1,
+                         std_span=0,
+                         theoretical_mean=theoretical_mean,
+                         theoretical_std=theoretical_std,
+                         start_pow=0)
+        plt.show()
