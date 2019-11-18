@@ -106,7 +106,8 @@ def classification_test_common(X_train_list, y_train_list,
                                max_pow, _run,
                                additional_classifiers_fd={},
                                additional_classifiers_matrix={},
-                               start_pow=1):
+                               start_pow=1,
+                               no_common_classifiers=False):
 
     cv = 10
 
@@ -115,14 +116,20 @@ def classification_test_common(X_train_list, y_train_list,
     classifiers_fd = {
         **additional_classifiers_fd
     }
-    classifiers_matrix = {
-        'lda': classifier_lda,
-        'qda': classifier_qda,
-        'pls_centroid': classifier_pls_centroid,
-        'pca_qda': classifier_pca_qda,
-        'rkc': classifier_rkc,
-        **additional_classifiers_matrix
-    }
+
+    if no_common_classifiers:
+        classifiers_matrix = {
+            **additional_classifiers_matrix
+        }
+    else:
+        classifiers_matrix = {
+            'lda': classifier_lda,
+            'qda': classifier_qda,
+            'pls_centroid': classifier_pls_centroid,
+            'pca_qda': classifier_pca_qda,
+            'rkc': classifier_rkc,
+            **additional_classifiers_matrix
+        }
 
     classifiers_all = {**classifiers_fd, **classifiers_matrix}
 
