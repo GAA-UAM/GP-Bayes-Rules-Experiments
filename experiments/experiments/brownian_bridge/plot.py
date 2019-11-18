@@ -42,7 +42,7 @@ def plot_experiment(id, plot_y_label=True):
 
     scores = exp.info['scores']
 
-    plot_scores(max_pow=max_pow, end_position=end_position,
+    plot_scores(max_pow=max_pow,
                 scores=scores,
                 legend_scores_optimal='Brownian-Bridge-Rule',
                 _run=None,

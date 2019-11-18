@@ -34,6 +34,8 @@ def classification_test(data, max_pow,
 
     X, y = build_dataset(data)
 
+    _run.info["class_variances"] = class_variances
+
     classifiers_fd = {
         'optimal': lambda **_: LongitudinalVarianceClassifier(),
         'brownian_qda': lambda **_: LongitudinalVarianceClassifier(
@@ -63,6 +65,9 @@ def classification_test(data, max_pow,
 
     theoretical_mean = np.array(mean_scores_theoretical)
     theoretical_std = np.array(std_scores_theoretical)
+
+    _run.info["theoretical_mean"] = theoretical_mean
+    _run.info["theoretical_std"] = theoretical_std
 
     if show_plot:
         plot.plot_scores(max_pow=max_pow,
