@@ -1,7 +1,7 @@
-from ..common.plot import plot_scores
+from ..common.plot import plot_experiments_common
 
 
-def plot_experiment(id, plot_y_label=True):
+def get_dict_by_id(id):
     from incense import ExperimentLoader
 
     loader = ExperimentLoader(
@@ -17,9 +17,12 @@ def plot_experiment(id, plot_y_label=True):
 
     scores = exp.info['scores']
 
-    plot_scores(max_pow=max_pow,
-                scores=scores,
-                legend_scores_optimal='Step-Rule',
-                _run=None,
-                optimal_accuracy=1,
-                plot_y_label=plot_y_label)
+    return {
+        'max_pow': max_pow,
+        'scores': scores,
+        'legend_scores_optimal': 'Step-Rule',
+        'optimal_accuracy': 1}
+
+
+def plot_experiments(ids, **kwargs):
+    return plot_experiments_common(ids, get_dict_by_id, **kwargs)

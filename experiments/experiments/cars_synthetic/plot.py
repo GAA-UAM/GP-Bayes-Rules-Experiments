@@ -22,9 +22,14 @@ def plot_experiment(id, plot_y_label=True):
     scores = {key: value for key, value in scores.items() if
               key != 'brownian_qda'}
 
-    plot_scores(max_pow=max_pow,
-                scores=scores,
-                legend_scores_optimal='NP-Rule',
-                _run=None,
-                optimal_accuracy=1,
-                plot_y_label=plot_y_label)
+    fig = plot_scores(max_pow=max_pow,
+                      scores=scores,
+                      legend_scores_optimal='NP-Rule',
+                      _run=None,
+                      optimal_accuracy=1,
+                      plot_y_label=plot_y_label)
+
+    return fig
+
+
+def plot_versus_table(id_real, id_synthetic):

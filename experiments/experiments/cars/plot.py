@@ -25,13 +25,15 @@ def plot_experiment(id, plot_y_label=True):
     theoretical_mean = exp.info['theoretical_mean']
     theoretical_std = exp.info['theoretical_std']
 
-    plot_scores(max_pow=max_pow,
-                scores=scores,
-                legend_scores_optimal='NP-Rule',
-                _run=None,
-                optimal_accuracy=1,
-                plot_y_label=plot_y_label,
-                std_span=0,
-                theoretical_mean=theoretical_mean,
-                theoretical_std=theoretical_std,
-                start_pow=0)
+    fig = plot_scores(max_pow=max_pow,
+                      scores=scores,
+                      legend_scores_optimal='NP-Rule',
+                      _run=None,
+                      optimal_accuracy=1,
+                      plot_y_label=plot_y_label,
+                      std_span=0,
+                      theoretical_mean=theoretical_mean,
+                      theoretical_std=theoretical_std,
+                      start_pow=0)
+
+    return fig

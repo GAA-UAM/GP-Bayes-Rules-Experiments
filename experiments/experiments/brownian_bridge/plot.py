@@ -42,9 +42,11 @@ def plot_experiment(id, plot_y_label=True):
 
     scores = exp.info['scores']
 
-    plot_scores(max_pow=max_pow,
-                scores=scores,
-                legend_scores_optimal='Brownian-Bridge-Rule',
-                _run=None,
-                optimal_accuracy=1 - bayes_error(end_position),
-                plot_y_label=plot_y_label)
+    fig = plot_scores(max_pow=max_pow,
+                      scores=scores,
+                      legend_scores_optimal='Brownian-Bridge-Rule',
+                      _run=None,
+                      optimal_accuracy=1 - bayes_error(end_position),
+                      plot_y_label=plot_y_label)
+
+    return fig

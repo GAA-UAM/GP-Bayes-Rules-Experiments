@@ -10,7 +10,7 @@ from .classification import classification_test
 
 @experiment.config
 def config():
-    max_pow = 10  # @UnusedVariable
+    max_pow = 5  # @UnusedVariable
     n_tests = 100  # @UnusedVariable
     class0_var = 1  # @UnusedVariable
     class1_var = 1  # @UnusedVariable
