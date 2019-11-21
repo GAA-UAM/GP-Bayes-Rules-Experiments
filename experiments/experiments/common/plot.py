@@ -2,6 +2,7 @@ import collections.abc
 import tempfile
 
 import matplotlib
+from matplotlib.ticker import MaxNLocator
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -97,7 +98,7 @@ def plot_scores(max_pow, scores, _run, optimal_accuracy,
                       mean=mean_scores['rkc'], std=std_scores['rkc'],
                       std_span=std_span,
                       label=legend_scores_rkc, color='C7', marker='*')
-    #axes.set_xticks([i - start_pow for i in range(start_pow, max_pow + 1)])
+    axes.xaxis.set_major_locator(MaxNLocator(integer=True))
     axes.set_xticklabels([2**i for i in range(start_pow, max_pow + 1)])
     axes.set_xlabel("$N_b$")
     if plot_y_label:
@@ -160,14 +161,9 @@ def plot_experiments_common(ids, function, titles=None, title=None, axes=None,
     fig.subplots_adjust(bottom=bottom)
     handles, labels = axes[0].get_legend_handles_labels()
 
-    ncols = 3
-    nlines = len(handles)
-
     # Theoretical at the end
     if 'Theoretical' in labels:
         pos = labels.index('Theoretical')
-
-        theoretical_line = handles[pos]
 
         handles = handles[:pos] + handles[pos + 1:] + [handles[pos]]
         labels = labels[:pos] + labels[pos + 1:] + [labels[pos]]

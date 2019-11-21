@@ -1,10 +1,7 @@
-import scipy.stats
-import numpy as np
-
-from ..common.plot import plot_scores
+from ..common.plot import plot_experiments_common
 
 
-def plot_experiment(id, plot_y_label=True):
+def get_dict_by_id(id):
     from incense import ExperimentLoader
 
     loader = ExperimentLoader(
@@ -19,14 +16,16 @@ def plot_experiment(id, plot_y_label=True):
     max_pow = exp.config['max_pow']
 
     scores = exp.info['scores']
-    scores = {key: value for key, value in scores.items() if
-              key != 'brownian_qda'}
+    scores = {
+        'optimal': scores['optimal'],
+        'brownian_qda': scores['brownian_qda']
+    }
 
-    fig = plot_scores(max_pow=max_pow,
-                      scores=scores,
-                      legend_scores_optimal='NP-Rule',
-                      _run=None,
-                      optimal_accuracy=1,
-                      plot_y_label=plot_y_label)
+    return {
+        'max_pow': max_pow,
+        'scores': scores,
+        'optimal_accuracy': 1}
 
-    return fig
+
+def plot_experiments(ids, **kwargs):
+    return plot_experiments_common(ids, get_dict_by_id, **kwargs)
