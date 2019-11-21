@@ -1,7 +1,7 @@
 import scipy.stats
 import numpy as np
 
-from ..common.plot import plot_scores
+from ..common.plot import plot_experiments_common
 
 
 def prob_error_brownian(end_position):
@@ -25,7 +25,7 @@ def bayes_error(end_position):
             + 0.5 * prob_error_brownian_bridge(end_position))
 
 
-def plot_experiment(id, plot_y_label=True):
+def get_dict_by_id(id):
     from incense import ExperimentLoader
 
     loader = ExperimentLoader(
@@ -42,11 +42,11 @@ def plot_experiment(id, plot_y_label=True):
 
     scores = exp.info['scores']
 
-    fig = plot_scores(max_pow=max_pow,
-                      scores=scores,
-                      legend_scores_optimal='Brownian-Bridge-Rule',
-                      _run=None,
-                      optimal_accuracy=1 - bayes_error(end_position),
-                      plot_y_label=plot_y_label)
+    return {
+        'max_pow': max_pow,
+        'scores': scores,
+        'optimal_accuracy': 1 - bayes_error(end_position)}
 
-    return fig
+
+def plot_experiments(ids, **kwargs):
+    return plot_experiments_common(ids, get_dict_by_id, **kwargs)

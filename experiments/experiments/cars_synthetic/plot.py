@@ -30,6 +30,3 @@ def plot_experiment(id, plot_y_label=True):
                       plot_y_label=plot_y_label)
 
     return fig
-
-
-def plot_versus_table(id_real, id_synthetic):

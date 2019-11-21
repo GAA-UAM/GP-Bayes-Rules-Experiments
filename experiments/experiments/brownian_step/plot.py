@@ -20,7 +20,6 @@ def get_dict_by_id(id):
     return {
         'max_pow': max_pow,
         'scores': scores,
-        'legend_scores_optimal': 'Step-Rule',
         'optimal_accuracy': 1}
 
 

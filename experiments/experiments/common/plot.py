@@ -24,7 +24,7 @@ def plot_with_var(ax, mean, std, color, label, std_span=0, **kwargs):
     ax.plot(mean, label=label, color=color, **kwargs)
 
 
-def plot_scores(max_pow, scores, legend_scores_optimal, _run, optimal_accuracy,
+def plot_scores(max_pow, scores, _run, optimal_accuracy,
                 std_span=1, plot_y_label=True, plot_legend=True,
                 theoretical_mean=None, theoretical_std=None,
                 start_pow=1, ylim_bottom=None, axes=None):
@@ -41,6 +41,7 @@ def plot_scores(max_pow, scores, legend_scores_optimal, _run, optimal_accuracy,
     mean_scores = {key: np.mean(s, axis=1) for key, s in scores.items()}
     std_scores = {key: np.std(s, axis=1) for key, s in scores.items()}
 
+    legend_scores_optimal = 'Limit-Rule'
     legend_scores_brownian_qda = 'Brownian-QDA'
     legend_scores_lda = 'LDA'
     legend_scores_qda = 'QDA'
@@ -77,25 +78,27 @@ def plot_scores(max_pow, scores, legend_scores_optimal, _run, optimal_accuracy,
         plot_with_var(axes,
                       mean=mean_scores['pca_qda'], std=std_scores['pca_qda'],
                       std_span=std_span,
-                      label=legend_scores_pca_qda, color='C6', marker='p')
+                      label=legend_scores_pca_qda, color='C6', marker='X')
     if 'lda' in scores:
         plot_with_var(axes,
                       mean=mean_scores['lda'], std=std_scores['lda'],
                       std_span=std_span,
-                      label=legend_scores_lda, color='C3', marker='s')
+                      label=legend_scores_lda, color='C3',
+                      linestyle='--', marker='s')
     if 'pls_centroid' in scores:
         plot_with_var(axes,
                       mean=mean_scores['pls_centroid'],
                       std=std_scores['pls_centroid'],
                       std_span=std_span,
-                      label=legend_scores_pls_centroid, color='C5', marker='X')
+                      label=legend_scores_pls_centroid,
+                      color='C5', linestyle='-.', marker='p')
     if 'rkc' in scores:
         plot_with_var(axes,
                       mean=mean_scores['rkc'], std=std_scores['rkc'],
                       std_span=std_span,
                       label=legend_scores_rkc, color='C7', marker='*')
-    axes.set_xticks(*list(zip(*[(i - start_pow, 2**i)
-                                for i in range(start_pow, max_pow + 1)])))
+    #axes.set_xticks([i - start_pow for i in range(start_pow, max_pow + 1)])
+    axes.set_xticklabels([2**i for i in range(start_pow, max_pow + 1)])
     axes.set_xlabel("$N_b$")
     if plot_y_label:
         axes.set_ylabel("Accuracy")
@@ -104,7 +107,7 @@ def plot_scores(max_pow, scores, legend_scores_optimal, _run, optimal_accuracy,
         leg = axes.legend(loc="upper left")
         leg.get_frame().set_alpha(1)
 
-    axes.set_xlim(0, max_pow)
+    axes.set_xlim(0, max_pow - start_pow)
     axes.set_ylim(top=1.05)
     if ylim_bottom is not None:
         axes.set_ylim(bottom=ylim_bottom)
@@ -118,14 +121,20 @@ def plot_scores(max_pow, scores, legend_scores_optimal, _run, optimal_accuracy,
     return fig
 
 
-def plot_experiments_common(ids, function, titles=None, title=None):
+def plot_experiments_common(ids, function, titles=None, title=None, axes=None,
+                            bottom=0.18):
     configure_matplotlib()
 
     n_experiments = len(ids)
     default_figsize = matplotlib.rcParams['figure.figsize']
 
-    fig, axes = plt.subplots(1, n_experiments, figsize=(
-        default_figsize[0] * n_experiments, default_figsize[1] * 1.5), sharey=True)
+    if axes is None:
+        fig, axes = plt.subplots(1, n_experiments, figsize=(
+            default_figsize[0] * n_experiments, default_figsize[1] * 1.5))
+    else:
+        fig = axes[0].figure
+
+    y_bottoms = []
 
     for i, id in enumerate(ids):
         options = function(id)
@@ -136,18 +145,36 @@ def plot_experiments_common(ids, function, titles=None, title=None):
                           plot_legend=False,
                           axes=axes[i])
 
+        y_bottoms.append(axes[i].get_ylim()[0])
+
         if titles is not None:
             axes[i].set_title(titles[i])
+
+    for i, id in enumerate(ids):
+        axes[i].set_ylim(bottom=np.min(y_bottoms))
 
     if title is not None:
         fig.set_title(title)
 
     fig.tight_layout()
-    fig.subplots_adjust(bottom=0.25)
-    handles, labels = fig.axes[0].get_legend_handles_labels()
+    fig.subplots_adjust(bottom=bottom)
+    handles, labels = axes[0].get_legend_handles_labels()
+
+    ncols = 3
+    nlines = len(handles)
+
+    # Theoretical at the end
+    if 'Theoretical' in labels:
+        pos = labels.index('Theoretical')
+
+        theoretical_line = handles[pos]
+
+        handles = handles[:pos] + handles[pos + 1:] + [handles[pos]]
+        labels = labels[:pos] + labels[pos + 1:] + [labels[pos]]
+
     leg = fig.legend(handles, labels, loc="lower center",
                      bbox_to_anchor=(0.5, 0),
-                     bbox_transform=fig.transFigure, ncol=3)
+                     bbox_transform=fig.transFigure, ncol=7)
     leg.get_frame().set_alpha(1)
 
     return fig
