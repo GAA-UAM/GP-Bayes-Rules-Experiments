@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 
 from . import experiment, plot
-from ..common.classification import classification_test_common
+from ..common.classification import classification_test_common, classifier_qda
 from ..common.longvar import LongitudinalVarianceClassifier
 
 
@@ -15,6 +15,10 @@ def classification_test(X_train_list, y_train_list, X_test_list, y_test_list,
             real_bayes_rule=True, synthetic_covariance=True)
     }
 
+    classifiers_matrix = {
+        'qda': classifier_qda
+    }
+
     scores, _ = classification_test_common(
         X_train_list=X_train_list,
         y_train_list=y_train_list,
@@ -23,14 +27,6 @@ def classification_test(X_train_list, y_train_list, X_test_list, y_test_list,
         max_pow=max_pow,
         _run=_run,
         additional_classifiers_fd=classifiers_fd,
+        additional_classifiers_matrix=classifiers_matrix,
         start_pow=0,
         no_common_classifiers=True)
-
-    if show_plot:
-        plot.plot_scores(max_pow=max_pow,
-                         scores=scores,
-                         legend_scores_optimal='Brownian-Bridge-Rule',
-                         _run=None,
-                         optimal_accuracy=1)
-
-        plt.show()

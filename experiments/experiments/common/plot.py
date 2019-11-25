@@ -26,9 +26,9 @@ def plot_with_var(ax, mean, std, color, label, std_span=0, **kwargs):
 
 
 def plot_scores(max_pow, scores, _run, optimal_accuracy,
-                std_span=1, plot_y_label=True, plot_legend=True,
+                std_span=1, plot_y_label="Accuracy", plot_legend=True,
                 theoretical_mean=None, theoretical_std=None,
-                start_pow=1, ylim_bottom=None, axes=None):
+                start_pow=1, ylim_top=1.05, ylim_bottom=None, axes=None):
 
     configure_matplotlib()
 
@@ -102,14 +102,15 @@ def plot_scores(max_pow, scores, _run, optimal_accuracy,
     axes.set_xticklabels([2**i for i in range(start_pow, max_pow + 1)])
     axes.set_xlabel("$N_b$")
     if plot_y_label:
-        axes.set_ylabel("Accuracy")
+        axes.set_ylabel(plot_y_label)
 
     if plot_legend:
-        leg = axes.legend(loc="upper left")
+        leg = axes.legend(loc="best", fontsize=12)
         leg.get_frame().set_alpha(1)
 
     axes.set_xlim(0, max_pow - start_pow)
-    axes.set_ylim(top=1.05)
+    if ylim_top is not None:
+        axes.set_ylim(top=ylim_top)
     if ylim_bottom is not None:
         axes.set_ylim(bottom=ylim_bottom)
     axes.axhline(optimal_accuracy, linestyle=':', color='black')
@@ -193,17 +194,22 @@ def get_confusion_matrix_stat(confusion_matrices, stat):
 
             result[key].append(new_pow_list)
 
+        result[key] = np.array(result[key][1:], ndmin=2)
+
     return result
 
 
 def fdr_stat(confusion_matrix):
-    print(confusion_matrix)
-
     return confusion_matrix[0, 1] / (
         confusion_matrix[0, 0] + confusion_matrix[0, 1])
 
 
-def plot_confusion_matrix_stat(id, stat, plot_y_label=True):
+def for_stat(confusion_matrix):
+    return confusion_matrix[1, 0] / (
+        confusion_matrix[1, 0] + confusion_matrix[1, 1])
+
+
+def plot_confusion_matrix_stat(id, stat, title=None, plot_y_label=True):
     from incense import ExperimentLoader
 
     loader = ExperimentLoader(
@@ -219,11 +225,24 @@ def plot_confusion_matrix_stat(id, stat, plot_y_label=True):
 
     confusion_matrices = exp.info['confusion_matrices']
 
+    title = exp.experiment.name
+
+    titles_dict = {
+        'brownian_step': 'Brownian step example',
+        'brownian_bridge': 'Brownian bridge example',
+        'brownian_variances': 'Brownian variances example',
+        'cars': 'Cars experiment'
+    }
+
     stat_dict = get_confusion_matrix_stat(confusion_matrices, stat)
 
-    plot_scores(max_pow=max_pow,
-                scores=stat_dict,
-                legend_scores_optimal='Optimal',
-                _run=None,
-                optimal_accuracy=0,
-                plot_y_label=plot_y_label)
+    fig = plot_scores(max_pow=max_pow,
+                      scores=stat_dict,
+                      _run=None,
+                      optimal_accuracy=0,
+                      plot_y_label=plot_y_label,
+                      ylim_top=None)
+
+    fig.axes[0].set_title(titles_dict[title])
+
+    return fig

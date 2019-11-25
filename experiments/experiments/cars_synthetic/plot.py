@@ -18,7 +18,8 @@ def get_dict_by_id(id):
     scores = exp.info['scores']
     scores = {
         'optimal': scores['optimal'],
-        'brownian_qda': scores['brownian_qda']
+        'brownian_qda': scores['brownian_qda'],
+        'qda': scores['qda']
     }
 
     return {
