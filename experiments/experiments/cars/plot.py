@@ -110,4 +110,4 @@ def plot_experiments(ids, titles, data_path, **kwargs):
         axes[0, i].set_title(titles[i])
 
     return plot_experiments_common(ids, get_dict_by_id, axes=axes[1],
-                                   bottom=0.15, **kwargs)
+                                   top=0.95, bottom=0.15, **kwargs)

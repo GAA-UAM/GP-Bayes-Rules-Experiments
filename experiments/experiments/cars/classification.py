@@ -6,7 +6,7 @@ from . import experiment
 from ..common import plot
 from ..common.classification import classification_test_common
 from ..common.longvar import LongitudinalVarianceClassifier
-from .theoretical import TheoreticalBounds
+from ..common.theoretical import TheoreticalBounds
 
 
 def build_dataset(d):

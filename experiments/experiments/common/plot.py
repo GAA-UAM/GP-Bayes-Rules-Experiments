@@ -9,12 +9,15 @@ import numpy as np
 
 
 def configure_matplotlib():
-    matplotlib.rcParams['axes.titlesize'] = 25
-    matplotlib.rcParams['axes.labelsize'] = 20
+    matplotlib.rcParams['axes.titlesize'] = 30
+    matplotlib.rcParams['axes.labelsize'] = 25
     matplotlib.rcParams['ps.useafm'] = True
     matplotlib.rcParams['pdf.use14corefonts'] = True
     matplotlib.rcParams['text.usetex'] = True
     matplotlib.rcParams['legend.fontsize'] = 20
+    matplotlib.rcParams['xtick.labelsize'] = 16
+    matplotlib.rcParams['ytick.labelsize'] = 16
+    matplotlib.rcParams['figure.titlesize'] = 30
 
 
 def plot_with_var(ax, mean, std, color, label, std_span=0, **kwargs):
@@ -124,7 +127,7 @@ def plot_scores(max_pow, scores, _run, optimal_accuracy,
 
 
 def plot_experiments_common(ids, function, titles=None, title=None, axes=None,
-                            bottom=0.18):
+                            top=None, bottom=0.20):
     configure_matplotlib()
 
     n_experiments = len(ids)
@@ -141,9 +144,11 @@ def plot_experiments_common(ids, function, titles=None, title=None, axes=None,
     for i, id in enumerate(ids):
         options = function(id)
 
+        if i != 0:
+            options['plot_y_label'] = False
+
         fig = plot_scores(**options,
                           _run=None,
-                          plot_y_label=(i == 0),
                           plot_legend=False,
                           axes=axes[i])
 
@@ -159,7 +164,7 @@ def plot_experiments_common(ids, function, titles=None, title=None, axes=None,
         fig.set_title(title)
 
     fig.tight_layout()
-    fig.subplots_adjust(bottom=bottom)
+    fig.subplots_adjust(top=top, bottom=bottom)
     handles, labels = axes[0].get_legend_handles_labels()
 
     # Theoretical at the end
@@ -209,7 +214,7 @@ def for_stat(confusion_matrix):
         confusion_matrix[1, 0] + confusion_matrix[1, 1])
 
 
-def plot_confusion_matrix_stat(id, stat, title=None, plot_y_label=True):
+def plot_confusion_matrix_stat(id, stat, title=None, plot_y_label=True, ylim_top=None):
     from incense import ExperimentLoader
 
     loader = ExperimentLoader(
@@ -241,8 +246,85 @@ def plot_confusion_matrix_stat(id, stat, title=None, plot_y_label=True):
                       _run=None,
                       optimal_accuracy=0,
                       plot_y_label=plot_y_label,
-                      ylim_top=None)
+                      ylim_top=ylim_top)
 
     fig.axes[0].set_title(titles_dict[title])
+
+    return fig
+
+
+def plot_confusion_matrix(id, n_samples, ylim_top=None,
+                          optimal_accuracy=[1, 0, 0, 1]):
+    from incense import ExperimentLoader
+
+    configure_matplotlib()
+
+    loader = ExperimentLoader(
+        # None if MongoDB is running on localhost or "mongodb://mongo:27017"
+        # when running in devcontainer.
+        mongo_uri=None,
+        db_name='GPBayes'
+    )
+
+    exp = loader.find_by_id(id)
+
+    max_pow = exp.config['max_pow']
+
+    confusion_matrices = exp.info['confusion_matrices']
+
+    confusion_matrices = {key: value for key, value
+                          in confusion_matrices.items() if
+                          key != 'brownian_qda'}
+
+    title = exp.experiment.name
+
+    titles_dict = {
+        'brownian_step': 'Brownian step example',
+        'brownian_bridge': 'Brownian bridge example',
+        'brownian_variances': 'Brownian variances example',
+        'cars': 'Cars experiment'
+    }
+
+    default_figsize = matplotlib.rcParams['figure.figsize']
+
+    fig, axes = plt.subplots(2, 2, figsize=(
+        default_figsize[0] * 2.2, default_figsize[1] * 3))
+
+    true_pos = get_confusion_matrix_stat(confusion_matrices,
+                                         lambda x: x[0, 0])
+    false_pos = get_confusion_matrix_stat(confusion_matrices,
+                                          lambda x: x[0, 1])
+    false_neg = get_confusion_matrix_stat(confusion_matrices,
+                                          lambda x: x[1, 0])
+    true_neg = get_confusion_matrix_stat(confusion_matrices,
+                                         lambda x: x[1, 1])
+
+    for scores, index, optimal in zip(
+        [true_pos, false_pos, false_neg, true_neg],
+        [(0, 0), (0, 1), (1, 0), (1, 1)],
+            optimal_accuracy):
+        plot_scores(max_pow=max_pow,
+                    scores=scores,
+                    _run=None,
+                    optimal_accuracy=optimal * n_samples // 2,
+                    plot_y_label=False,
+                    ylim_top=ylim_top,
+                    ylim_bottom=0,
+                    plot_legend=False,
+                    axes=axes[index])
+
+    axes[0, 0].set_xlabel(None)
+    axes[0, 1].set_xlabel(None)
+
+    fig.suptitle(titles_dict[title])
+
+    fig.tight_layout()
+    fig.subplots_adjust(top=0.93, bottom=0.15, hspace=0.1)
+    handles, labels = axes[0, 0].get_legend_handles_labels()
+
+    leg = fig.legend(handles, labels, loc="lower center",
+                     bbox_to_anchor=(0.5, 0),
+                     bbox_transform=fig.transFigure, ncol=7)
+    leg.get_frame().set_alpha(1)
 
     return fig
