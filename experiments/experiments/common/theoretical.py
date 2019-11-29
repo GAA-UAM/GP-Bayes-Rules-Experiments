@@ -77,15 +77,18 @@ class TheoreticalBounds():
     def s(self, i):
         return np.sqrt(self.s_sqr(i))
 
-    def error_probability(self):
+    def error_probability_with_priors(self, priors):
         return (0.5
                 - 0.5 *
-                self.prior[0] *
+                priors[0] *
                 scipy.special.erf(-self.mu(0) / (self.s(0) * np.sqrt(2)))
                 - 0.5 *
-                self.prior[1] *
+                priors[1] *
                 scipy.special.erf(self.mu(1) / (self.s(1) * np.sqrt(2)))
                 )
+
+    def error_probability(self):
+        return self.error_probability_with_priors(self.prior)
 
     def error_probability_std(self, n_traj):
         e_prob = self.error_probability()

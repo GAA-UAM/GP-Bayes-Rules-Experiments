@@ -51,6 +51,14 @@ def configure_matplotlib():
     matplotlib.rcParams['text.usetex'] = True
 
 
+def get_chunk_i_front(x, i, chunk_size):
+    return x[i * chunk_size: (i + 1) * chunk_size]
+
+
+def get_chunk_i_tail(x, i, chunk_size):
+    return get_chunk_i_front(x[len(x) // 2:], i, chunk_size)
+
+
 @experiment.capture
 def main(max_pow, n_tests, class0_var, class1_var,
          train_n_samples, test_n_samples,
@@ -61,20 +69,36 @@ def main(max_pow, n_tests, class0_var, class1_var,
 
     configure_matplotlib()
 
-    X_train_list, y_train_list = zip(*[generate_data(
-        n_samples=train_n_samples,
+    X_data_train, y_data_train = generate_data(
+        n_samples=train_n_samples * n_tests,
         n_features=2**max_pow + 1,
         class0_var=class0_var,
         class1_var=class1_var,
         random_state=random_state)
-        for _ in range(n_tests)])
-    X_test_list, y_test_list = zip(*[generate_data(
-        n_samples=test_n_samples,
+
+    X_data_test, y_data_test = generate_data(
+        n_samples=test_n_samples * n_tests,
         n_features=2**max_pow + 1,
         class0_var=class0_var,
         class1_var=class1_var,
         random_state=random_state_test)
-        for _ in range(n_tests)])
+
+    train_n_per_class = train_n_samples // 2
+    test_n_per_class = test_n_samples // 2
+
+    X_train_list, y_train_list = zip(*[(
+        get_chunk_i_front(X_data_train, i, train_n_per_class).concatenate(
+            get_chunk_i_tail(X_data_train, i, train_n_per_class)),
+        np.concatenate((get_chunk_i_front(y_data_train, i, train_n_per_class),
+                        get_chunk_i_tail(y_data_train, i, train_n_per_class))))
+        for i in range(n_tests)])
+
+    X_test_list, y_test_list = zip(*[(
+        get_chunk_i_front(X_data_test, i, test_n_per_class).concatenate(
+            get_chunk_i_tail(X_data_test, i, test_n_per_class)),
+        np.concatenate((get_chunk_i_front(y_data_test, i, test_n_per_class),
+                        get_chunk_i_tail(y_data_test, i, test_n_per_class))))
+        for i in range(n_tests)])
 
     X_train_list[0].plot(group=y_train_list[0])
 

@@ -4,7 +4,7 @@ from sacred import Experiment
 from sacred.observers import TelegramObserver
 
 
-experiment = Experiment(name="brownian_variances")
+experiment = Experiment(name="brownian_variances_simulation")
 
 FILE_PATH = os.path.dirname(__file__)
 

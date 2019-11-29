@@ -55,10 +55,16 @@ def plot_scores(max_pow, scores, _run, optimal_accuracy,
     legend_theoretical = 'Theoretical'
 
     if theoretical_mean is not None:
+        std_span_theoretical = 2
+
+        if theoretical_std is None:
+            theoretical_std = theoretical_mean * 0
+            std_span_theoretical = 0
+
         plot_with_var(axes,
                       mean=theoretical_mean,
                       std=theoretical_std,
-                      std_span=2,
+                      std_span=std_span_theoretical,
                       label=legend_theoretical, color='C4')
     plot_with_var(axes,
                   mean=mean_scores['optimal'], std=std_scores['optimal'],
@@ -185,6 +191,7 @@ def plot_experiments_common(ids, function, titles=None, title=None, axes=None,
 def get_confusion_matrix_stat(confusion_matrices, stat):
 
     result = {}
+    start_pow = 0
 
     for key, value in confusion_matrices.items():
 
@@ -196,10 +203,11 @@ def get_confusion_matrix_stat(confusion_matrices, stat):
                 new_pow_list = [stat(repetition) for repetition in pow_list]
             else:
                 new_pow_list = pow_list
+                start_pow += 1
 
             result[key].append(new_pow_list)
 
-        result[key] = np.array(result[key][1:], ndmin=2)
+        result[key] = np.array(result[key][start_pow:], ndmin=2)
 
     return result
 
@@ -254,7 +262,9 @@ def plot_confusion_matrix_stat(id, stat, title=None, plot_y_label=True, ylim_top
 
 
 def plot_confusion_matrix(id, n_samples, ylim_top=None,
-                          optimal_accuracy=[1, 0, 0, 1]):
+                          optimal_accuracy=[1, 0, 0, 1],
+                          theoretical_accuracy=None,
+                          title=None):
     from incense import ExperimentLoader
 
     configure_matplotlib()
@@ -276,14 +286,17 @@ def plot_confusion_matrix(id, n_samples, ylim_top=None,
                           in confusion_matrices.items() if
                           key != 'brownian_qda'}
 
-    title = exp.experiment.name
+    if title is None:
+        title = exp.experiment.name
 
-    titles_dict = {
-        'brownian_step': 'Brownian step example',
-        'brownian_bridge': 'Brownian bridge example',
-        'brownian_variances': 'Brownian variances example',
-        'cars': 'Cars experiment'
-    }
+        titles_dict = {
+            'brownian_step': 'Brownian step example',
+            'brownian_bridge': 'Brownian bridge example',
+            'brownian_variances': 'Brownian variances example',
+            'cars': 'Cars experiment'
+        }
+
+        title = titles_dict[title]
 
     default_figsize = matplotlib.rcParams['figure.figsize']
 
@@ -299,10 +312,10 @@ def plot_confusion_matrix(id, n_samples, ylim_top=None,
     true_neg = get_confusion_matrix_stat(confusion_matrices,
                                          lambda x: x[1, 1])
 
-    for scores, index, optimal in zip(
+    for i, (scores, index, optimal) in enumerate(zip(
         [true_pos, false_pos, false_neg, true_neg],
         [(0, 0), (0, 1), (1, 0), (1, 1)],
-            optimal_accuracy):
+            optimal_accuracy)):
         plot_scores(max_pow=max_pow,
                     scores=scores,
                     _run=None,
@@ -311,15 +324,24 @@ def plot_confusion_matrix(id, n_samples, ylim_top=None,
                     ylim_top=ylim_top,
                     ylim_bottom=0,
                     plot_legend=False,
-                    axes=axes[index])
+                    theoretical_mean=theoretical_accuracy[i] * n_samples // 2
+                    if theoretical_accuracy is not None else None,
+                    axes=axes[index],
+                    start_pow=0)
 
     axes[0, 0].set_xlabel(None)
     axes[0, 1].set_xlabel(None)
 
-    fig.suptitle(titles_dict[title])
+    axes[0, 0].set_ylabel('Class 0')
+    axes[1, 0].set_ylabel('Class 1')
+
+    axes[0, 0].set_title('Predicted class 0')
+    axes[0, 1].set_title('Predicted class 1')
+
+    fig.suptitle(title)
 
     fig.tight_layout()
-    fig.subplots_adjust(top=0.93, bottom=0.15, hspace=0.1)
+    fig.subplots_adjust(top=0.89, bottom=0.15, hspace=0.1)
     handles, labels = axes[0, 0].get_legend_handles_labels()
 
     leg = fig.legend(handles, labels, loc="lower center",

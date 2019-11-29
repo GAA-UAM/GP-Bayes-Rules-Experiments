@@ -138,6 +138,7 @@ def classification_test_common(X_train_list, y_train_list,
         confusion_matrices[key] = [np.nan] * (max_pow + 1)
 
     for resolution in range(start_pow, max_pow + 1):
+
         X_train_w_res_list = [fdatagrid_with_resolution(X_train, resolution)
                               for X_train in X_train_list]
         X_train_w_res_list_matrices = [

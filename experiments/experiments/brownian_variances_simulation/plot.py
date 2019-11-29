@@ -19,9 +19,14 @@ def get_dict_by_id(id):
     scores = {key: value for key, value in scores.items() if
               key != 'brownian_qda'}
 
+    theoretical_mean = exp.info['theoretical_mean']
+    theoretical_std = exp.info['theoretical_std']
+
     return {
         'max_pow': max_pow,
         'scores': scores,
+        'theoretical_mean': theoretical_mean,
+        'theoretical_std': theoretical_std,
         'optimal_accuracy': 1}
 
 
