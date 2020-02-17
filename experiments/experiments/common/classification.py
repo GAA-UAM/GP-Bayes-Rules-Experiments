@@ -1,3 +1,4 @@
+import numpy as np
 from sklearn.cross_decomposition import PLSRegression
 from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import (
@@ -9,8 +10,7 @@ from sklearn.neighbors import NearestCentroid
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-from fda_methods.rk import RK
-import numpy as np
+from .rk import RK
 
 
 class PLS(PLSRegression):
