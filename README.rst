@@ -85,16 +85,17 @@ is in the original article.
 The common configuration parameters are the following:
 
 - ``max_pow = 10``: The maximum power of the resolution used in the
-	discretization.
+					discretization.
 - ``n_tests = 100``: The number of independent replications.
 - ``train_n_samples = 1000``: The number of observations in the train set. It
-	must be set to 50, 200 and 1000 in separate runs, to replicate the
-	results of the paper.
+                              must be set to 50, 200 and 1000 in separate
+                              runs, to replicate the
+                              results of the paper.
 - ``test_n_samples = 1000``: The number of observations in the test set. 
 - ``random_state_train_seed = 0``: A random seed to initialize the RNG that
-	is used in the train set generation.
+                                   is used in the train set generation.
 - ``random_state_test_seed = 1``: A random seed to initialize the RNG that
-	is used in the test set generation.
+                                  is used in the test set generation.
 
 Brownian processes with different means
 ---------------------------------------
@@ -118,7 +119,8 @@ experiment folder for this experiment is ``brownian_bridge``.
 The additional configuration parameters for this experiment are:
 
 - ``end_position = 0.5``: The end of the interval in which the functions are
-	evaluated. Set it to 0.95 to match the results in the article.
+                          evaluated. Set it to 0.95 to match the results in
+                          the article.
 	
 Brownian processes with different variances
 -------------------------------------------
@@ -131,7 +133,7 @@ The additional configuration parameters for this experiment are:
 
 - ``class0_var = 1``: The variance of class 0.
 - ``class1_var = 1.3``: The variance of class 1. Set it to 1.5 to match the
-  results in the article.
+                        results in the article.
   
 The real data example and the simulated data example, available in ``cars``
 and ``cars_synthetic`` are similar to this one. The data for the real
