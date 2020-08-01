@@ -22,7 +22,11 @@ class PLS(PLSRegression):
 def fdatagrid_with_resolution(array, resolution):
     step = (array.data_matrix.shape[1] - 1) // 2**resolution
 
-    return array[:, ::step]
+    sample_points = array.sample_points[0][::step]
+    data_matrix = array.data_matrix[:, ::step]
+
+    return array.copy(sample_points=sample_points,
+                      data_matrix=data_matrix)
 
 
 def dict_with_resolution(d, resolution):
