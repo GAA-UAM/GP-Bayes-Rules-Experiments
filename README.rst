@@ -59,7 +59,7 @@ Plotting a experiment
 =====================
 
 In order to plot the results, there are functions called `plot_experiments` in
-each of the submodules corresponding to the plotting part to each experiment.
+each of the submodules corresponding to the plotting part of each experiment.
 These functions can create the *matplotlib* figure of the results, as shown
 below:
 
